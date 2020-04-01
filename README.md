@@ -47,5 +47,11 @@
    
    示例视频：https://somebottle.gitee.io/bottlecos/bblockdemo.mp4  
    
+## 小提示  
+如果页面中的播放器没有被唤醒，可以在加载当前页面的js中加入：  
+```javascript
+bblock.s();  
+```
+
 ## LICENSE
 MIT LICENSE.  
