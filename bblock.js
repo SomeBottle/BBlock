@@ -22,6 +22,7 @@ var bblock={
 		'true'==j.loop ? audio.setAttribute('loop','loop') : e=e;/*loop*/
 		j.volume ? audio.volume=Number(j.volume)*0.01 : e=e;/*volume*/
 		j.float ? e.style.float=j.float : e.style.float='left';/*float*/
+		j.time ? audio.currentTime=j.time : e=e;/*time*/
 		o.g(e,'t').innerHTML=j.title || '';/*title*/
 		o.g(e,'a').innerHTML=j.artist || '';/*artist*/
 		audio.src=j.src;/*src*/
