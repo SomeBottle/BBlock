@@ -14,7 +14,7 @@ var bblock={
 		}
 	},
 	c:function(e,j){/*construct(element,json)*/
-        e.innerHTML='<div class="p"></div><div class="s"></div><div class="ad"><div class="tm"></div><div class="vm"></div></div><div class="ct"><div class="b"></div><div class="t"></div><div class="a"></div></div><audio src="" preload="auto"></audio>';
+        e.innerHTML='<div class="p"></div><div class="s"></div><div class="ad"><p class="notice">拖拽蓝/紫块以调节进度/音量</p><div class="tm"></div><div class="vm"></div></div><div class="ct"><div class="b"></div><div class="t"></div><div class="a"></div></div><audio src="" preload="auto"></audio>';
 	    var o=this,audio=e.getElementsByTagName('audio')[0];
 		e.style.display='block';
 		e.className='bblock';
@@ -31,17 +31,11 @@ var bblock={
 		o.g(e,'p').addEventListener('click',function(){o.p(e,audio)},false);
 		o.g(e,'s').addEventListener('click',function(){o.ps(e,audio)},false);/*播放暂停按钮事件*/
 		o.g(e,'ad').addEventListener('mouseover',function(){o.ad(e,audio)},false);/*调整器事件*/
-		o.g(e,'ad').addEventListener('mouseleave',function(){o.mo(e,audio)},false);/*调整器事件*/
+		o.g(e,'ad').addEventListener('mouseleave',function(){o.mo(e,audio)},false);/*调整器事件，采用mouseleave防止误判*/
 	},
 	p:function(e,a){/*Play(element,audio)*/
 		var o=this,pbtn=o.g(e,'p'),sbtn=o.g(e,'s'),ct=o.g(e,'ct');
 		o.precent=pbtn.style;/*save recent style*/
-		function sb(){
-			sbtn.style.opacity=1;
-			pbtn.style.display='none';
-			ct.style.display='none';
-			pbtn.removeEventListener('transitionend',sb);
-		}
 		pbtn.style.height='25px';
 		pbtn.style.width='25px';
 		pbtn.style.top='100%';
@@ -50,21 +44,23 @@ var bblock={
 		pbtn.style.transform='translate(-100%,-100%)';
 		sbtn.style.display='block';
 		ct.style.opacity=0;
-		pbtn.addEventListener('transitionend',sb);
+		o.anm(pbtn,function(){
+			sbtn.style.opacity=1;
+			pbtn.style.display='none';
+			ct.style.display='none';
+		});
 		a.play();
 	},
 	ps:function(e,a){/*Pause(element,audio)*/
 		var o=this,pbtn=o.g(e,'p'),sbtn=o.g(e,'s'),ct=o.g(e,'ct'),adjusting=e.getAttribute('adstatu');
 		pbtn.style.display='block';
 		ct.style.display='block';
-		function sb(){
+		sbtn.style.opacity=0;
+		o.anm(sbtn,function(){
 			sbtn.style.display='none';
-			sbtn.removeEventListener('transitionend',sb);
 			pbtn.style=o.precent;
 			ct.style.opacity=1;
-		}
-		sbtn.style.opacity=0;
-		sbtn.addEventListener('transitionend',sb);
+		});
 		a.pause();
 	},
 	ad:function(e,au){/*adjust(element,audio)*/
@@ -92,9 +88,10 @@ var bblock={
 	},
 	spn:function(e,au){/*showpanel(element,audio)*/
 	    e.setAttribute('adstatu','true');
-		var o=this,tm=o.g(e,'tm'),vm=o.g(e,'vm'),ad=o.g(e,'ad'),tmpcent=0;
+		var o=this,tm=o.g(e,'tm'),vm=o.g(e,'vm'),ad=o.g(e,'ad'),nt=o.g(e,'notice'),tmpcent=0,ntstatu=e.getAttribute('ntstatu');
 		tm.style.display='block';
-		vm.style.display='block';
+		vm.style.display='block';		
+		nt.style.opacity=1;
 		ad.style.opacity=1;
 		tm.onmousedown=function(ev){/*进度拖拽*/
 		   var percent=(au.currentTime/au.duration)*100,startm=ev.screenX;
@@ -133,16 +130,31 @@ var bblock={
 		window.onmouseup=function(){
 			window.onmousemove=false;
 		}
+		if(ntstatu!=='true'){/*闪烁一次就行*/
+		    nt.style.animation='1.5s flash ease normal';
+			e.setAttribute('ntstatu','true');
+			nt.style.display='block';
+		    o.anm(nt,function(){
+			    nt.style.animation='';
+			    nt.style.display='none';
+		    },'animationend');
+		}
 	},
 	hpn:function(e,au){/*hidepanel(element,audio)*/
 		var o=this,tm=o.g(e,'tm'),vm=o.g(e,'vm'),ad=o.g(e,'ad');
 		ad.style.opacity=0;
-		function hide(){
+		e.setAttribute('ntstatu','false');
+		o.anm(ad,function(){
 			tm.style.display='none';
 		    vm.style.display='none';
-			ad.removeEventListener('transitionend',hide);
+		});
+	},
+	anm:function(el,func,ev='transitionend'){/*transition动画检查器(element,function)*/
+	    function hide(){
+			func();
+			el.removeEventListener(ev,hide);
 		}
-		ad.addEventListener('transitionend',hide,false);
+		el.addEventListener(ev,hide,false)
 	}
 };
 bblock.s();
