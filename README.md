@@ -3,7 +3,7 @@
 
 🎵 Wow~you can really play! Square Music Player
 
-> 乃博客常备神器  
+> 乃博客常备神器 Designed for blogging  
 
 ## 造他就完事了!  
 1. 在头部引用bblock.(m.).css和bblock.(m.).js  
@@ -23,7 +23,7 @@
    </bblock>
    ```
 
-   |键|值|备注|
+   |键key|值value|备注notice|
    |-----|-----|-----|
    |src|音乐的url|必需|
    |cover|音乐封面的url|非必需|
