@@ -94,10 +94,12 @@ var bblock={
 		nt.style.opacity=1;
 		ad.style.opacity=1;
 		tm.onmousedown=function(ev){/*进度拖拽*/
+		   ev=ev.targetTouches ? ev.targetTouches[0] : ev;/*移动端事件适配*/
 		   var percent=(au.currentTime/au.duration)*100,startm=ev.screenX;
 		   tm.style.width=percent+'%';
 		   vm.style.width=(100-percent)+'%';
 		   function mousemove(eve){/*拖拽时的样式*/
+		       eve=eve.targetTouches ? eve.targetTouches[0] : eve;/*移动端事件适配*/
 			   var newm=eve.screenX,dr=(newm-startm)*1.5;
 			   pcent=percent+dr;
 			   if(pcent<=0){
@@ -112,15 +114,22 @@ var bblock={
 		   function mouseup(){
 			   window.removeEventListener('mousemove',mousemove);
 		       window.removeEventListener('mouseup',mouseup);
+			   window.removeEventListener('touchmove',mousemove);/*移动端事件适配*/
+		       window.removeEventListener('touchend',mouseup);
 		   }
 		   window.addEventListener('mousemove',mousemove,false);
 		   window.addEventListener('mouseup',mouseup,false);
+		   window.addEventListener('touchmove',mousemove,false);/*移动端事件适配*/
+		   window.addEventListener('touchend',mouseup,false);
 		}
+		tm.ontouchstart=tm.onmousedown;/*移动端事件适配*/
 		vm.onmousedown=function(ev){/*音量拖拽*/
+		    ev=ev.targetTouches ? ev.targetTouches[0] : ev;/*移动端事件适配*/
 			var percent=(au.volume/1)*100,startm=ev.screenX;
 			tm.style.width=(100-percent)+'%';
 			vm.style.width=percent+'%';
 			function mousemove(eve){/*拖拽时的样式*/
+			   eve=eve.targetTouches ? eve.targetTouches[0] : eve;/*移动端事件适配*/
 			   var newm=eve.screenX,dr=(newm-startm)*2;
 			   pcent=percent-dr;/*音量调节拖拽的方向相反*/
 			   if(pcent<=0){
@@ -135,10 +144,15 @@ var bblock={
 		   function mouseup(){
 			   window.removeEventListener('mousemove',mousemove);
 		       window.removeEventListener('mouseup',mouseup);
+			   window.removeEventListener('touchmove',mousemove);/*移动端事件适配*/
+		       window.removeEventListener('touchend',mouseup);
 		   }
 		   window.addEventListener('mousemove',mousemove,false);
 		   window.addEventListener('mouseup',mouseup,false);
+		   window.addEventListener('touchmove',mousemove,false);/*移动端事件适配*/
+		   window.addEventListener('touchend',mouseup,false);
 		}
+		vm.ontouchstart=vm.onmousedown;/*移动端事件适配*/
 		if(ntstatu!=='true'){/*闪烁一次就行*/
 		    nt.style.animation='1.5s flash ease normal';
 			e.setAttribute('ntstatu','true');
