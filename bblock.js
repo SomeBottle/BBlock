@@ -14,7 +14,8 @@ var bblock={
 		}
 	},
 	c:function(e,j){/*construct(element,json)*/
-        e.innerHTML='<div class="p"></div><div class="s"></div><div class="ad"><p class="notice">拖拽蓝/紫块以调节进度/音量</p><div class="tm"></div><div class="vm"></div></div><div class="ct"><div class="b"></div><div class="t"></div><div class="a"></div></div><audio src="" preload="auto"></audio>';
+        e.innerHTML='<p class="tip">在此点击/悬停可进行调节</p><div class="p"></div><div class="s"></div><div class="ad"><p class="notice">拖拽蓝/紫块以调节进度/音量</p><div class="tm"></div><div class="vm"></div></div><div class="ct"><div class="b"></div><div class="t"></div><div class="a"></div></div><audio src="" preload="auto"></audio>';
+		e.setAttribute('firstplay','true');/*首次使用*/
 	    var o=this,audio=e.getElementsByTagName('audio')[0];
 		e.style.display='block';
 		e.className='bblock';
@@ -34,7 +35,7 @@ var bblock={
 		o.g(e,'ad').addEventListener('mouseleave',function(){o.mo(e,audio)},false);/*调整器事件，采用mouseleave防止误判*/
 	},
 	p:function(e,a){/*Play(element,audio)*/
-		var o=this,pbtn=o.g(e,'p'),sbtn=o.g(e,'s'),ct=o.g(e,'ct');
+		var o=this,pbtn=o.g(e,'p'),sbtn=o.g(e,'s'),ct=o.g(e,'ct'),tip=o.g(e,'tip'),firstplay=e.getAttribute('firstplay');
 		o.precent=pbtn.style;/*save recent style*/
 		pbtn.style.height='25px';
 		pbtn.style.width='25px';
@@ -44,10 +45,19 @@ var bblock={
 		pbtn.style.transform='translate(-100%,-100%)';
 		sbtn.style.display='block';
 		ct.style.opacity=0;
+		if(firstplay=='true'){/*首次播放闪烁可调节提示,UX++*/
+			e.setAttribute('firstplay','false');
+			tip.style.display='block';
+			tip.style.opacity=0;
+		}
 		o.anm(pbtn,function(){
 			sbtn.style.opacity=1;
 			pbtn.style.display='none';
 			ct.style.display='none';
+			tip.style.animation='1.5s flash ease normal';
+			o.anm(tip,function(){
+			    tip.style.display='none';
+		    },'animationend');
 		});
 		a.play();
 	},

@@ -134,7 +134,23 @@
 	width:90%;
 	transform:translate(-50%,-50%);
 	opacity:1;
-	transition: .5s ease
+	transition: .5s ease;
+	margin:0 auto;
+}
+
+.bblock .tip {
+	position: absolute;
+	text-align:center;
+	color:#FAFAFA;
+	display: none;
+	left: 50%;
+	top: 50%;
+	width:90%;
+	transform:translate(-50%,-50%);
+	opacity:1;
+	transition: .5s ease;
+	margin:0 auto;
+	text-shadow:0 0 5px #101010;
 }
 
 .bblock .tm {
