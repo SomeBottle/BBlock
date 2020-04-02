@@ -97,7 +97,7 @@ var bblock={
 		   var percent=(au.currentTime/au.duration)*100,startm=ev.screenX;
 		   tm.style.width=percent+'%';
 		   vm.style.width=(100-percent)+'%';
-		   window.onmousemove=function(eve){/*拖拽时的样式*/
+		   function mousemove(eve){/*拖拽时的样式*/
 			   var newm=eve.screenX,dr=(newm-startm)*1.5;
 			   pcent=percent+dr;
 			   if(pcent<=0){
@@ -109,12 +109,18 @@ var bblock={
 		       vm.style.width=(100-pcent)+'%';
 			   au.currentTime=au.duration*pcent*0.01;/*调整播放时间*/
 		   }
+		   function mouseup(){
+			   window.removeEventListener('mousemove',mousemove);
+		       window.removeEventListener('mouseup',mouseup);
+		   }
+		   window.addEventListener('mousemove',mousemove,false);
+		   window.addEventListener('mouseup',mouseup,false);
 		}
 		vm.onmousedown=function(ev){/*音量拖拽*/
 			var percent=(au.volume/1)*100,startm=ev.screenX;
 			tm.style.width=(100-percent)+'%';
 			vm.style.width=percent+'%';
-			window.onmousemove=function(eve){/*拖拽时的样式*/
+			function mousemove(eve){/*拖拽时的样式*/
 			   var newm=eve.screenX,dr=(newm-startm)*2;
 			   pcent=percent-dr;/*音量调节拖拽的方向相反*/
 			   if(pcent<=0){
@@ -126,9 +132,12 @@ var bblock={
 		       vm.style.width=pcent+'%';
 			   au.volume=pcent*0.01;/*调整播放时间*/
 		   }
-		}
-		window.onmouseup=function(){
-			window.onmousemove=false;
+		   function mouseup(){
+			   window.removeEventListener('mousemove',mousemove);
+		       window.removeEventListener('mouseup',mouseup);
+		   }
+		   window.addEventListener('mousemove',mousemove,false);
+		   window.addEventListener('mouseup',mouseup,false);
 		}
 		if(ntstatu!=='true'){/*闪烁一次就行*/
 		    nt.style.animation='1.5s flash ease normal';
