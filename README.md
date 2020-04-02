@@ -3,7 +3,7 @@
 
 🎵 Wow~you can really play! Square Music Player
 
-> 乃博客常备神器 Designed for blogging  
+> 乃博客常备神器 Designed for blog.  
 
 ## 造他就完事了!  
 1. 在头部引用bblock.(m.).css和bblock.(m.).js  
