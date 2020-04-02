@@ -45,7 +45,7 @@
    * 拖拽右方的紫块可以调节音量  
    * 单机左方和右方的块可以看当前的进度或者音量  
    
-   示例视频：https://somebottle.gitee.io/bottlecos/bblock.mp4  
+   示例视频：https://somebottle.gitee.io/bottlecos/bblock0.7.mp4   
    
 ## 小提示  
 如果页面中的播放器没有被唤醒，可以在加载当前页面的js中加入：  
