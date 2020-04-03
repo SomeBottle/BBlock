@@ -98,7 +98,8 @@
 	font-size: 10px;
 	right: 0;
 	bottom: 0;
-	margin: 0 5px 5px 0
+	margin: 0 5px 5px 0;
+	padding-left:5px;
 }
 
 .bblock .b {
@@ -123,7 +124,7 @@
 	transition: .5s ease
 }
 
-.bblock .notice {
+.bblock .notice,.bblock .tip {
 	position: absolute;
 	text-align:center;
 	z-index:2;
@@ -136,45 +137,31 @@
 	opacity:1;
 	transition: .5s ease;
 	margin:0 auto;
+	user-select:none;
 }
 
 .bblock .tip {
-	position: absolute;
-	text-align:center;
-	color:#FAFAFA;
-	display: none;
-	left: 50%;
-	top: 50%;
-	width:90%;
-	transform:translate(-50%,-50%);
-	opacity:1;
-	transition: .5s ease;
-	margin:0 auto;
 	text-shadow:0 0 5px #101010;
 }
 
-.bblock .tm {
+.bblock .tm,.bblock .vm {
 	position: absolute;
 	display: none;
-	left: 0;
 	top: 0;
 	width: 50%;
 	height: 100%;
-	background-color: #819FF7;
 	opacity: 0.7;
 	cursor: pointer;
-	transition: .5s ease
+	transition: .5s ease;
+	user-select:none;/*防止卡拖拽现象*/
+}
+
+.bblock .tm {
+	left: 0;
+	background-color: #819FF7;
 }
 
 .bblock .vm {
-	position: absolute;
-	display: none;
 	right: 0;
-	top: 0;
-	width: 50%;
-	height: 100%;
 	background-color: #BCA9F5;
-	opacity: 0.7;
-	cursor: pointer;
-	transition: .5s ease
 }

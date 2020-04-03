@@ -13,11 +13,24 @@ var bblock={
 			}
 		}
 	},
+	t:function(e,k,v){/*setstyle(element,key,value)*/
+		if(e instanceof Array){
+			for(var i in e){
+				k instanceof Array ? (e[i].style[k[i]]=v instanceof Array ? v[i] : v) : (e[i].style[k]=v instanceof Array ? v[i] : v);/*设置样式*/
+			}
+		}else if(k instanceof Array){
+			for(var i in k){
+				e.style[k[i]]=v instanceof Array ? v[i] : v;
+			}
+		}else{
+			e.style[k]=v;
+		}
+	},
 	c:function(e,j){/*construct(element,json)*/
         e.innerHTML='<p class="tip">在此点击/悬停可进行调节</p><div class="p"></div><div class="s"></div><div class="ad"><p class="notice">拖拽蓝/紫块以调节进度/音量</p><div class="tm"></div><div class="vm"></div></div><div class="ct"><div class="b"></div><div class="t"></div><div class="a"></div></div><audio src="" preload="auto"></audio>';
 		e.setAttribute('firstplay','true');/*首次使用*/
 	    var o=this,audio=e.getElementsByTagName('audio')[0];
-		e.style.display='block';
+		o.t(e,'display','block');/*构建时显示播放器*/
 		e.className='bblock';
 		j.cover ? e.style.backgroundImage='url('+j.cover+')' :e=e;/*有封面就用封面*/
 		'true'==j.loop ? audio.setAttribute('loop','loop') : e=e;/*loop*/
@@ -37,23 +50,16 @@ var bblock={
 	p:function(e,a){/*Play(element,audio)*/
 		var o=this,pbtn=o.g(e,'p'),sbtn=o.g(e,'s'),ct=o.g(e,'ct'),tip=o.g(e,'tip'),firstplay=e.getAttribute('firstplay');
 		o.precent=pbtn.style;/*save recent style*/
-		pbtn.style.height='25px';
-		pbtn.style.width='25px';
-		pbtn.style.top='100%';
-		pbtn.style.left='100%';
-		pbtn.style.opacity=0;
-		pbtn.style.transform='translate(-100%,-100%)';
+		o.t(pbtn,['height','width','top','left','opacity','transform','display'],['25px','25px','100%','100%',0,'translate(-100%,-100%)','block']);/*播放按钮样式*/
 		sbtn.style.display='block';
 		ct.style.opacity=0;
 		if(firstplay=='true'){/*首次播放闪烁可调节提示,UX++*/
 			e.setAttribute('firstplay','false');
-			tip.style.display='block';
-			tip.style.opacity=0;
+			o.t(tip,['display','opacity'],['block',0]);
 		}
-		o.anm(pbtn,function(){
+		o.anm(pbtn,function(){/*显示暂停按钮*/
 			sbtn.style.opacity=1;
-			pbtn.style.display='none';
-			ct.style.display='none';
+			o.t([pbtn,ct],'display','none');
 			tip.style.animation='1.5s flash ease normal';
 			o.anm(tip,function(){
 			    tip.style.display='none';
@@ -63,10 +69,9 @@ var bblock={
 	},
 	ps:function(e,a){/*Pause(element,audio)*/
 		var o=this,pbtn=o.g(e,'p'),sbtn=o.g(e,'s'),ct=o.g(e,'ct'),adjusting=e.getAttribute('adstatu');
-		pbtn.style.display='block';
-		ct.style.display='block';
+		o.t([pbtn,ct],'display','block');
 		sbtn.style.opacity=0;
-		o.anm(sbtn,function(){
+		o.anm(sbtn,function(){/*显示播放按钮*/
 			sbtn.style.display='none';
 			pbtn.style=o.precent;
 			ct.style.opacity=1;
@@ -92,22 +97,17 @@ var bblock={
 		if(!au.paused&&opened=='true'){
 			this.hpn(e,au);/*关闭面板*/
 			e.setAttribute('adstatu','false');
-			tm.style.width='50%';
-		    vm.style.width='50%';
+			o.t([tm,vm],'width','50%');/*蓝紫块复原*/
 		}
 	},
 	spn:function(e,au){/*showpanel(element,audio)*/
 	    e.setAttribute('adstatu','true');
 		var o=this,tm=o.g(e,'tm'),vm=o.g(e,'vm'),ad=o.g(e,'ad'),nt=o.g(e,'notice'),tmpcent=0,ntstatu=e.getAttribute('ntstatu');
-		tm.style.display='block';
-		vm.style.display='block';		
-		nt.style.opacity=1;
-		ad.style.opacity=1;
+		o.t([tm,vm,nt,ad],['display','display','opacity','opacity'],['block','block',1,1]);/*蓝紫块和提示显示*/
 		tm.onmousedown=function(ev){/*进度拖拽*/
 		   ev=ev.targetTouches ? ev.targetTouches[0] : ev;/*移动端事件适配*/
 		   var percent=(au.currentTime/au.duration)*100,startm=ev.screenX;
-		   tm.style.width=percent+'%';
-		   vm.style.width=(100-percent)+'%';
+		   o.t([tm,vm],'width',[percent+'%',(100-percent)+'%']);/*显示当前的蓝块值*/
 		   function mousemove(eve){/*拖拽时的样式*/
 		       eve=eve.targetTouches ? eve.targetTouches[0] : eve;/*移动端事件适配*/
 			   var newm=eve.screenX,dr=(newm-startm)*1.5;
@@ -117,8 +117,7 @@ var bblock={
 			   }else if(pcent>=100){
 				   pcent=100;
 			   }
-			   tm.style.width=pcent+'%';
-		       vm.style.width=(100-pcent)+'%';
+			   o.t([tm,vm],'width',[pcent+'%',(100-pcent)+'%']);/*拖拽时跟随鼠标*/
 			   au.currentTime=au.duration*pcent*0.01;/*调整播放时间*/
 		   }
 		   function mouseup(){
@@ -136,8 +135,7 @@ var bblock={
 		vm.onmousedown=function(ev){/*音量拖拽*/
 		    ev=ev.targetTouches ? ev.targetTouches[0] : ev;/*移动端事件适配*/
 			var percent=(au.volume/1)*100,startm=ev.screenX;
-			tm.style.width=(100-percent)+'%';
-			vm.style.width=percent+'%';
+			o.t([tm,vm],'width',[(100-percent)+'%',percent+'%']);/*显示当前的紫块值*/
 			function mousemove(eve){/*拖拽时的样式*/
 			   eve=eve.targetTouches ? eve.targetTouches[0] : eve;/*移动端事件适配*/
 			   var newm=eve.screenX,dr=(newm-startm)*2;
@@ -147,8 +145,7 @@ var bblock={
 			   }else if(pcent>=100){
 				   pcent=100;
 			   }
-			   tm.style.width=(100-pcent)+'%';
-		       vm.style.width=pcent+'%';
+			   o.t([tm,vm],'width',[(100-pcent)+'%',pcent+'%']);/*拖拽时跟随鼠标*/
 			   au.volume=pcent*0.01;/*调整播放时间*/
 		   }
 		   function mouseup(){
@@ -178,8 +175,7 @@ var bblock={
 		ad.style.opacity=0;
 		e.setAttribute('ntstatu','false');
 		o.anm(ad,function(){
-			tm.style.display='none';
-		    vm.style.display='none';
+			o.t([tm,vm],'display','none');/*隐藏蓝紫块实体*/
 		});
 	},
 	anm:function(el,func,ev='transitionend'){/*transition动画检查器(element,function)*/
