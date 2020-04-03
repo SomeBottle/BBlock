@@ -5,12 +5,12 @@ var bblock={
 		return e.getElementsByClassName(a)[0];
 	},
 	s:function(){/*setup*/
+	    var ps=document.getElementsByTagName('bblock'),o=this;/*get players*/
         setTimeout(function(){
-		    var ps=document.getElementsByTagName('bblock');/*get players*/
 		    for(var p in ps){
 			    if(ps[p].innerHTML){
 			       var c=JSON.parse(ps[p].innerHTML);
-			       c.src ? this.c(ps[p],c) : c=c;/*存在源就开始构造播放器*/
+			       c.src ? o.c(ps[p],c) : c=c;/*存在源就开始构造播放器*/
 			    }
 		    }
 		},500);
