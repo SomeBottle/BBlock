@@ -56,7 +56,6 @@ var bblock={
 		sbtn.style.display='block';
 		ct.style.opacity=0;
 		if(firstplay=='true'){/*首次播放闪烁可调节提示,UX++*/
-			e.setAttribute('firstplay','false');
 			o.t(tip,['display','opacity'],['block',0]);
 		}
 		o.anm(pbtn,function(){/*显示暂停按钮*/
@@ -64,6 +63,7 @@ var bblock={
 			o.t([pbtn,ct],'display','none');
 			tip.style.animation='1.5s flash ease normal';
 			o.anm(tip,function(){
+				e.setAttribute('firstplay','false');
 			    tip.style.display='none';
 		    },'animationend');
 		});
@@ -85,11 +85,11 @@ var bblock={
 		if(!au.paused){/*不是暂停状态*/
 			e.setAttribute('adflag','true');
 			setTimeout(function(){
-				var flag=e.getAttribute('adflag');
-				if(flag=='true'){
+				var flag=e.getAttribute('adflag'),firstplay=e.getAttribute('firstplay');
+				if(flag=='true'&&firstplay=='false'){
 					o.spn(e,au);/*打开面板*/
 				}
-			},1500);
+			},1000);
 		}
 	},
 	mo:function(e,au){/*mousemoveout*/
@@ -163,7 +163,7 @@ var bblock={
 		}
 		vm.ontouchstart=vm.onmousedown;/*移动端事件适配*/
 		if(ntstatu!=='true'){/*闪烁一次就行*/
-		    nt.style.animation='1.5s flash ease normal';
+		    nt.style.animation='2.0s flash ease normal';
 			e.setAttribute('ntstatu','true');
 			nt.style.display='block';
 		    o.anm(nt,function(){
@@ -175,7 +175,6 @@ var bblock={
 	hpn:function(e,au){/*hidepanel(element,audio)*/
 		var o=this,tm=o.g(e,'tm'),vm=o.g(e,'vm'),ad=o.g(e,'ad');
 		ad.style.opacity=0;
-		e.setAttribute('ntstatu','false');
 		o.anm(ad,function(){
 			o.t([tm,vm],'display','none');/*隐藏蓝紫块实体*/
 		});
