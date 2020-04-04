@@ -6,7 +6,7 @@
 > 乃博客常备神器 Designed for blog.  
 
 ## 造他就完事了!  
-1. 在头部引用bblock.(m.).css和bblock.(m.).js  
+1. 在头部引用bblock.(m.).css,在所有\<bblock\>标签之后引用bblock.(m.).js  
 2. 在html内加入类似于以下标签：  
    ```html
    <bblock style='display:none'>
