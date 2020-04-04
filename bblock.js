@@ -47,6 +47,7 @@ var bblock={
 		o.g(e,'p').addEventListener('click',function(){o.p(e,audio)},false);
 		o.g(e,'s').addEventListener('click',function(){o.ps(e,audio)},false);/*播放暂停按钮事件*/
 		o.g(e,'ad').addEventListener('mouseover',function(){o.ad(e,audio)},false);/*调整器事件*/
+		o.g(e,'ad').addEventListener('click',function(){o.ad(e,audio)},false);/*调整器事件*/
 		o.g(e,'ad').addEventListener('mouseleave',function(){o.mo(e,audio)},false);/*调整器事件，采用mouseleave防止误判*/
 	},
 	p:function(e,a){/*Play(element,audio)*/
