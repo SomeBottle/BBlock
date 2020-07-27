@@ -5,6 +5,9 @@
 
 > 乃博客常备神器 Designed for blog.  
 
+## Demo  
+[https://bblock.xbottle.top/demo](https://bblock.xbottle.top/demo)  
+
 ## 造他就完事了!  
 1. 在头部引用bblock.(m.).css,在所有\<bblock\>标签之后引用bblock.(m.).js  
 2. 在html内加入类似于以下标签：  
