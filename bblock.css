@@ -124,6 +124,21 @@
 	transition: .5s ease
 }
 
+.bblock .prb {
+	opacity: 0;
+	position: absolute;
+	z-index: 1;
+	left: 50%;
+	top: 50%;
+	width: 0%;
+	height: 0%;
+	border-radius:50%;
+	background-color:#848484;
+	opacity:0;
+	transform:translate(-50%,-50%);
+	transition: .5s ease
+}
+
 .bblock .notice,.bblock .tip {
 	position: absolute;
 	text-align:center;

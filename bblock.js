@@ -1,4 +1,4 @@
-/*BBlock~Wow~you can really play! -SomeBottle*/
+/*BBlock1.3~Wow~you can really play! -SomeBottle*/
 var bblock={
 	precent:{},/*playbtn's recentstyle*/
 	g:function(e,a){
@@ -29,7 +29,7 @@ var bblock={
 		}
 	},
 	c:function(e,j){/*construct(element,json)*/
-        e.innerHTML='<p class="tip">在此点击/悬停可进行调节</p><div class="p"></div><div class="s"></div><div class="ad"><p class="notice">拖拽蓝/紫块以调节进度/音量</p><div class="tm"></div><div class="vm"></div></div><div class="ct"><div class="b"></div><div class="t"></div><div class="a"></div></div><audio src="" preload="auto"></audio>';
+        e.innerHTML='<p class="tip">在此点击/悬停可进行调节</p><div class="prb"></div><div class="p"></div><div class="s"></div><div class="ad"><p class="notice">拖拽蓝/紫块以调节进度/音量</p><div class="tm"></div><div class="vm"></div></div><div class="ct"><div class="b"></div><div class="t"></div><div class="a"></div></div><audio src="" preload="auto"></audio>';
 		e.setAttribute('firstplay','true');/*首次使用*/
 	    var o=this,audio=e.getElementsByTagName('audio')[0];
 		o.t(e,'display','block');/*构建时显示播放器*/
@@ -42,6 +42,7 @@ var bblock={
 		o.g(e,'t').innerHTML=j.title || '';/*title*/
 		o.g(e,'a').innerHTML=j.artist || '';/*artist*/
 		audio.src=j.src;/*src*/
+		audio.addEventListener('timeupdate',function(){o.l(e,audio);},false);/*进度监听20200805*/
 		audio.addEventListener('ended',function(){o.ps(e,audio);o.mo(e,audio)},false);/*播放完毕*/
 		if(e.clientWidth<=o.g(e,'t').clientWidth) o.g(e,'t').style.animation='7s tloop linear infinite normal';/*看情况开滚动*/
 		o.g(e,'p').addEventListener('click',function(){o.p(e,audio)},false);
@@ -50,8 +51,12 @@ var bblock={
 		o.g(e,'ad').addEventListener('click',function(){o.ad(e,audio)},false);/*调整器事件*/
 		o.g(e,'ad').addEventListener('mouseleave',function(){o.mo(e,audio)},false);/*调整器事件，采用mouseleave防止误判*/
 	},
+	l:function(e,a){/*Listen to the Progress20200805*/
+	    var o=this,prb=o.g(e,'prb'),percent=(a.currentTime/a.duration),hpercent=percent*100;/*get progress bar and progress*/
+		o.t(prb,['height','width','borderRadius'],[hpercent+'%',hpercent+'%',50*(1-percent)+'%']);/*marginradius是倒着来的*/
+	},
 	p:function(e,a){/*Play(element,audio)*/
-		var o=this,pbtn=o.g(e,'p'),sbtn=o.g(e,'s'),ct=o.g(e,'ct'),tip=o.g(e,'tip'),firstplay=e.getAttribute('firstplay');
+		var o=this,pbtn=o.g(e,'p'),prb=o.g(e,'prb'),sbtn=o.g(e,'s'),ct=o.g(e,'ct'),tip=o.g(e,'tip'),firstplay=e.getAttribute('firstplay');
 		o.precent=pbtn.style;/*save recent style*/
 		o.t(pbtn,['height','width','top','left','opacity','transform','display'],['25px','25px','100%','100%',0,'translate(-100%,-100%)','block']);/*播放按钮样式*/
 		sbtn.style.display='block';
@@ -61,7 +66,7 @@ var bblock={
 		}
 		o.anm(pbtn,function(){/*显示暂停按钮*/
 			sbtn.style.opacity=1;
-			o.t([pbtn,ct],'display','none');
+			o.t([pbtn,ct,prb],['display','display','opacity'],['none','none',0.2]);/*播放时样式改变20200805*/
 			tip.style.animation='1.5s flash ease normal';
 			o.anm(tip,function(){
 				e.setAttribute('firstplay','false');
@@ -71,8 +76,8 @@ var bblock={
 		a.play();
 	},
 	ps:function(e,a){/*Pause(element,audio)*/
-		var o=this,pbtn=o.g(e,'p'),sbtn=o.g(e,'s'),ct=o.g(e,'ct'),adjusting=e.getAttribute('adstatu');
-		o.t([pbtn,ct],'display','block');
+		var o=this,pbtn=o.g(e,'p'),prb=o.g(e,'prb'),sbtn=o.g(e,'s'),ct=o.g(e,'ct'),adjusting=e.getAttribute('adstatu');
+		o.t([pbtn,ct,prb],['display','display','opacity'],['block','block',0]);/*播放时样式改变20200805*/
 		sbtn.style.opacity=0;
 		o.anm(sbtn,function(){/*显示播放按钮*/
 			sbtn.style.display='none';
@@ -82,25 +87,26 @@ var bblock={
 		a.pause();
 	},
 	ad:function(e,au){/*adjust(element,audio)*/
-	    var o=this;
+	    var o=this,prb=o.g(e,'prb');/*获得进度元素20200805*/
 		if(!au.paused){/*不是暂停状态*/
 			e.setAttribute('adflag','true');
 			setTimeout(function(){
 				var flag=e.getAttribute('adflag'),firstplay=e.getAttribute('firstplay');
 				if(flag=='true'&&firstplay=='false'){
+					o.t(prb,'opacity',0);/*隐藏进度元素20200805*/
 					o.spn(e,au);/*打开面板*/
 				}
 			},1000);
 		}
 	},
 	mo:function(e,au){/*mousemoveout*/
-	    var o=this,tm=o.g(e,'tm'),vm=o.g(e,'vm'),ad=o.g(e,'ad');
+	    var o=this,tm=o.g(e,'tm'),vm=o.g(e,'vm'),ad=o.g(e,'ad'),prb=o.g(e,'prb');
 		e.setAttribute('adflag','false');
 		var opened=e.getAttribute('adstatu');
 		if(!au.paused&&opened=='true'){
 			this.hpn(e,au);/*关闭面板*/
 			e.setAttribute('adstatu','false');
-			o.t([tm,vm],'width','50%');/*蓝紫块复原*/
+			o.t([tm,vm,prb],['width','width','opacity'],['50%','50%',0.2]);/*蓝紫块复原*/
 		}
 	},
 	spn:function(e,au){/*showpanel(element,audio)*/
