@@ -1,4 +1,4 @@
-/*BBlock1.3~Wow~you can really play! -SomeBottle*/
+/*BBlock1.4~Wow~you can really play! -SomeBottle*/
 var bblock={
 	precent:{},/*playbtn's recentstyle*/
 	g:function(e,a){
@@ -66,7 +66,7 @@ var bblock={
 		}
 		o.anm(pbtn,function(){/*显示暂停按钮*/
 			sbtn.style.opacity=1;
-			o.t([pbtn,ct,prb],['display','display','opacity'],['none','none',0.2]);/*播放时样式改变20200805*/
+			o.t([pbtn,ct,prb,e],['display','display','opacity','border'],['none','none',0.2,'2px solid rgba(10,10,10,0.1)']);/*播放时样式改变20200805*/
 			tip.style.animation='1.5s flash ease normal';
 			o.anm(tip,function(){
 				e.setAttribute('firstplay','false');
@@ -77,7 +77,7 @@ var bblock={
 	},
 	ps:function(e,a){/*Pause(element,audio)*/
 		var o=this,pbtn=o.g(e,'p'),prb=o.g(e,'prb'),sbtn=o.g(e,'s'),ct=o.g(e,'ct'),adjusting=e.getAttribute('adstatu');
-		o.t([pbtn,ct,prb],['display','display','opacity'],['block','block',0]);/*播放时样式改变20200805*/
+		o.t([pbtn,ct,prb,e],['display','display','opacity','border'],['block','block',0,'0px solid rgba(10,10,10,0)']);/*播放时样式改变20200805*/
 		sbtn.style.opacity=0;
 		o.anm(sbtn,function(){/*显示播放按钮*/
 			sbtn.style.display='none';
