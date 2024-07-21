@@ -5,7 +5,12 @@
 
 > 乃博客常备神器 Designed for blog.  
 
+## Todo
+
+- [ ] 项目模块化重构
+
 ## Demo  
+
 [https://bblock.xbottle.top/demo](https://bblock.xbottle.top/demo)  
 
 ## 造他就完事了!  
@@ -51,7 +56,9 @@
    示例视频：https://somebottle.gitee.io/bottlecos/bblock0.7.mp4   
    
 ## 小提示  
+
 如果页面中的播放器没有被唤醒，可以在加载当前页面的js中加入：  
+
 ```javascript
 bblock.s();  
 ```
