@@ -1,0 +1,101 @@
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>BBlock Demo</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+</head>
+
+<style>
+	body {
+		background-color: black;
+	}
+</style>
+
+<body style='margin:0 auto'>
+	<bblock style='display:none'>
+		{
+		"src":"https://music.163.com/song/media/outer/url?id=1950918260",
+		"cover":"https://p1.music.126.net/fWAIHaaQnnLoMaiyi-TgaA==/109951167478463917.jpg",
+		"title":"ティアラ (feat. 初音ミク)",
+		"artist":"せきこみごはん / 初音ミク",
+		"loop":"false",
+		"float":"left"
+		}
+	</bblock>
+	<bblock style='display:none'>
+		{
+		"src":"https://sounds-static.xbottle.top/Sing%20My%20Pleasure%20-%20%E5%85%AB%E6%9C%A8%E6%B5%B7%E8%8E%89%20(320kbps).mp3",
+		"title":"Sing My Pleasure",
+		"cover":"https://p1.music.126.net/N5MGemr22IcT5GSHKhjDuA==/109951165870860904.jpg",
+		"artist":"八木海莉"
+		}
+	</bblock>
+	<bblock style='display:none'>
+		{
+		"src":"https://music.163.com/song/media/outer/url?id=2117484911",
+		"title":"白花",
+		"artist":"鈴木このみ",
+		"loop":"true",
+		"float":"right"
+		}
+	</bblock>
+	<bblock style='display:none'>
+		{
+		"src":"https://music.163.com/song/media/outer/url?id=22826401",
+		"cover":"https://p1.music.126.net/ZRbWRuUaoGewNJLesPCCsA==/885106860383218.jpg",
+		"title":"God knows...",
+		"artist":"平野綾",
+		"volume":50,
+		"loop":"false",
+		"float":"right"
+		}
+	</bblock>
+	<div style='position:absolute;left:10px;bottom:10px;'>
+		<p style='color: rgb(86, 86, 86);'>BBlock v1.4.1</p>
+		<iframe src="https://ghbtns.com/github-btn.html?user=SomeBottle&repo=BBlock&type=star&count=true&size=large"
+			frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+	</div>
+	<script>
+		// 此处模拟 scripts/build.js 的功能，直接在浏览器中加载 bblock.js、bblock.css 和 bblock.html，并将 CSS 和 HTML 插入到 JS 中
+		// 方便开发预览
+		(async () => {
+			function escapeTemplateLiteral(value) {
+				return value
+					.replace(/\\/g, '\\\\')
+					.replace(/`/g, '\\`')
+					.replace(/\$\{/g, '\\${');
+			}
+
+			const [js, css, html] = await Promise.all(
+				['bblock.js', 'bblock.css', 'bblock.html'].map(async (file) => {
+					const response = await fetch(`./src/${file}`, { cache: 'no-store' });
+					if (!response.ok) {
+						throw new Error(`Failed to load ${file}: HTTP ${response.status}`);
+					}
+					return response.text();
+				})
+			);
+
+			const assets = {
+				css: escapeTemplateLiteral(css),
+				html: escapeTemplateLiteral(html)
+			};
+			const source = js.replace(/\{\{(CSS|HTML)\}\}/gi, (_, name) => assets[name.toLowerCase()]);
+
+			const style = document.createElement('style');
+			style.className = 'bblock-css';
+			style.textContent = css;
+			document.head.appendChild(style);
+
+			const script = document.createElement('script');
+			script.textContent = source + '\n//# sourceURL=bblock.preview.js';
+			document.body.appendChild(script);
+		})().catch((error) => {
+			console.error('BBlock preview failed:', error);
+		});
+	</script>
+</body>
+
+</html>

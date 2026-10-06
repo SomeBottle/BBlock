@@ -1,0 +1,27 @@
+{
+  "name": "bblock",
+  "version": "2.0.0",
+  "description": "Wow~you can really play! Square Music Player",
+  "scripts": {
+    "build": "node scripts/build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SomeBottle/BBlock.git"
+  },
+  "keywords": [
+    "player",
+    "javascript"
+  ],
+  "author": "SomeBottle",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SomeBottle/BBlock/issues"
+  },
+  "homepage": "https://github.com/SomeBottle/BBlock#readme",
+  "devDependencies": {
+    "clean-css": "^5.3.3",
+    "html-minifier-terser": "^7.2.0",
+    "terser": "^5.51.2"
+  }
+}
