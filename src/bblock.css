@@ -69,7 +69,7 @@
 	text-shadow: 0 0 5px #101010;
 }
 
-.bblock-wrapper .mask {
+.bblock-wrapper .cover {
 	position: absolute;
 	z-index: 1;
 	width: 100%;
@@ -99,6 +99,7 @@
 	z-index: 3;
 	left: 0;
 	width: 100%;
+	padding: 5px 0 0 2px;
 	mask-image: linear-gradient(to right,
 			transparent 0,
 			#000 5px,
