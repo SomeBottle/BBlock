@@ -55,6 +55,7 @@
 }
 
 .bblock-wrapper .tip {
+	pointer-events: none;
 	user-select: none;
 	position: absolute;
 	text-align: center;
@@ -91,7 +92,7 @@
 	height: 30px;
 	width: 30px;
 	cursor: pointer;
-	transition: .5s ease
+	transition: .4s ease
 }
 
 .bblock-wrapper .title-wrapper {
@@ -145,4 +146,22 @@
 
 .bblock-wrapper .moveTrans:hover {
 	transform: translateX(calc(-1 * var(--overflow-width)));
+}
+
+/* 播放状态 */
+.state-playing .cover {
+	opacity: 0;
+	pointer-events: none;
+	user-select: none;
+}
+
+.state-playing .play {
+	opacity: 0;
+	height: 25px;
+	width: 25px;
+	top: 100%;
+	left: 100%;
+	transform: translate(-100%, -100%);
+	pointer-events: none;
+	user-select: none;
 }

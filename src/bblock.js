@@ -60,6 +60,7 @@ class BBlockPlayer {
 		this.wrapperEl = this.e.querySelector('.bblock-wrapper');
 		this.titleEl = this.wrapperEl.querySelector('.title');
 		this.artistEl = this.wrapperEl.querySelector('.artist');
+		this.playEl = this.wrapperEl.querySelector('.play');
 		BBlockPlayer.style(this.e, { position: 'relative', display: 'inline-block', 'float': this.config.float || 'none' });
 
 		// 计算溢出宽度
@@ -74,6 +75,15 @@ class BBlockPlayer {
 			this.artistEl.style.setProperty('--overflow-width', `${artistOvf}px`);
 			this.artistEl.classList.add('moveTrans');
 		}
+		// 注册点击事件
+		this.playEl.addEventListener('click', this.play.bind(this));
+	}
+
+	/**
+	 * 播放音频
+	 */
+	play() {
+		this.wrapperEl.classList.add('state-playing');
 	}
 };
 
