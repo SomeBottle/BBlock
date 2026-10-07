@@ -57,6 +57,19 @@ class BBlockPlayer {
 	}
 
 	/**
+	 * 等待元素的过渡动画结束
+	 * @param {HTMLElement} element 元素
+	 * @returns {Promise} 返回一个 Promise，当过渡动画结束时 resolve
+	 */
+	static waitTransitionEnd(element) {
+		return new Promise((resolve) => {
+			element.addEventListener('transitionend', () => {
+				resolve();
+			});
+		});
+	}
+
+	/**
 	 * 检查 BBlock CSS 是否应用到页面中
 	 */
 	checkCSS() {
@@ -100,6 +113,7 @@ class BBlockPlayer {
 		this.artistWrapperEl = this.wrapperEl.querySelector('.artist-wrapper');
 		this.artistEl = this.wrapperEl.querySelector('.artist');
 		this.playEl = this.wrapperEl.querySelector('.play');
+		this.pauseEl = this.wrapperEl.querySelector('.pause');
 		this.audioEl = this.wrapperEl.querySelector('audio');
 		this.tipEl = this.wrapperEl.querySelector('.tip');
 		BBlockPlayer.style(this.e, { position: 'relative', display: 'inline-block', 'float': this.config.float || 'none' });
@@ -142,6 +156,7 @@ class BBlockPlayer {
 		}
 		// 注册鼠标事件
 		this.playEl.addEventListener('click', this.play.bind(this));
+		this.pauseEl.addEventListener('click', this.pause.bind(this));
 		// 鼠标移入封皮时的处理主要是用于提醒用户音频出错了，这里节流避免频繁触发
 		this.coverEl.addEventListener('mouseenter', BBlockPlayer.throttle(this._coverMouseEnterHandler.bind(this), 2000));
 		// 注册音频事件
@@ -156,9 +171,8 @@ class BBlockPlayer {
 
 	/**
 	 * 音频播放出错时的处理函数
-	 * @param {Event} e 事件
 	 */
-	_audioErrorHandler(e) {
+	_audioErrorHandler() {
 		this.audioError = true;
 		this.wrapperEl.classList.add('state-error');
 		this.wrapperEl.classList.remove('state-loading');
@@ -176,7 +190,7 @@ class BBlockPlayer {
 	 * 鼠标移入封皮时的处理函数
 	 */
 	_coverMouseEnterHandler(e) {
-		if(e.target !== this.coverEl) return; // 只在鼠标移入封皮时触发
+		if (e.target !== this.coverEl) return; // 只在鼠标移入封皮时触发
 		// 如果音频出错了，就提示用户
 		if (this.audioError) {
 			this.tip('音频开小差了 :(');
@@ -188,6 +202,26 @@ class BBlockPlayer {
 	 */
 	play() {
 		this.wrapperEl.classList.add('state-playing');
+		BBlockPlayer.waitTransitionEnd(this.playEl).then(() => {
+			BBlockPlayer.style(this.pauseEl, { opacity: '1', pointerEvents: 'auto' });
+		});
+		this.audioEl.play().catch((err) => {
+			console.error('Audio play failed:', err);
+			this.tip('播放失败 :(');
+			// 播放失败，通常不会有这种情况，因此直接标记为 error
+			this._audioErrorHandler();
+		});
+	}
+
+	/**
+	 * 暂停音频
+	 */
+	pause() {
+		BBlockPlayer.style(this.pauseEl, { opacity: '0', pointerEvents: 'none' });
+		BBlockPlayer.waitTransitionEnd(this.pauseEl).then(() => {
+			this.wrapperEl.classList.remove('state-playing');
+		});
+		this.audioEl.pause();
 	}
 };
 

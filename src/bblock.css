@@ -136,10 +136,22 @@
 	height: 32px;
 	width: 32px;
 	cursor: pointer;
-	transition: .4s ease
+	transition: .4s ease;
 }
 
-.state-error .play {
+.bblock-wrapper .pause {
+	position: absolute;
+	z-index: 2;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 50'%3E%3Crect x='7' y='5' width='11' height='40' rx='4.5' fill='%23e8e8e8'/%3E%3Crect x='30' y='5' width='11' height='40' rx='4.5' fill='%23e8e8e8'/%3E%3C/svg%3E");
+	right: 6px;
+	bottom: 7px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.6));
+	height: 25px;
+	width: 25px;
+	cursor: pointer;
+	transition: .4s ease;
 	opacity: 0;
 	pointer-events: none;
 }
@@ -217,4 +229,25 @@
 	transform: translate(-100%, -100%);
 	pointer-events: none;
 	user-select: none;
+}
+
+/* 
+音频错误状态 
+
+发生错误时强制回到封皮状态
+*/
+.state-error .play {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.state-error .cover {
+	opacity: 1;
+	pointer-events: auto;
+	user-select: auto;
+}
+
+.state-error .pause {
+	opacity: 0 !important;
+	pointer-events: none !important;
 }
