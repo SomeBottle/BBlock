@@ -115,6 +115,7 @@ class BBlockPlayer {
 		this.playEl = this.wrapperEl.querySelector('.play');
 		this.pauseEl = this.wrapperEl.querySelector('.pause');
 		this.audioEl = this.wrapperEl.querySelector('audio');
+		this.customBgEl = this.wrapperEl.querySelector('.custom-bg');
 		this.tipEl = this.wrapperEl.querySelector('.tip');
 		BBlockPlayer.style(this.e, { position: 'relative', display: 'inline-block', 'float': this.config.float || 'none' });
 
@@ -136,7 +137,7 @@ class BBlockPlayer {
 
 		// 设置封面图片
 		if (this.config.cover) {
-			BBlockPlayer.style(this.wrapperEl, { 'background-image': `url(${this.config.cover})` });
+			BBlockPlayer.style(this.customBgEl, { 'background-image': `url(${this.config.cover})` });
 		}
 
 		// 计算溢出宽度
