@@ -163,7 +163,9 @@ class BBlockPlayer {
 		// 注册音频事件
 		this.audioEl.addEventListener('canplay', this._audioCanplayHandler.bind(this));
 		this.audioEl.addEventListener('waiting', this._audioWaitHandler.bind(this));
+		this.audioEl.addEventListener('ended', this.pause.bind(this));
 		this.audioEl.addEventListener('error', this._audioErrorHandler.bind(this));
+		this.audioEl.addEventListener('timeupdate', BBlockPlayer.throttle(this._timeUpdateHandler.bind(this), 100));
 	}
 
 	_audioWaitHandler(e) {
@@ -173,7 +175,8 @@ class BBlockPlayer {
 	/**
 	 * 音频播放出错时的处理函数
 	 */
-	_audioErrorHandler() {
+	_audioErrorHandler(e) {
+		if (e.target !== this.audioEl) return;
 		this.audioError = true;
 		this.wrapperEl.classList.add('state-error');
 		this.wrapperEl.classList.remove('state-loading');
@@ -184,6 +187,7 @@ class BBlockPlayer {
 	 * @param {Event} e 事件
 	 */
 	_audioCanplayHandler(e) {
+		if (e.target !== this.audioEl) return;
 		this.wrapperEl.classList.remove('state-loading');
 	}
 
@@ -196,6 +200,14 @@ class BBlockPlayer {
 		if (this.audioError) {
 			this.tip('音频开小差了 :(');
 		}
+	}
+
+	/**
+	 * 音频播放进度更新时的处理函数
+	 */
+	_timeUpdateHandler(e) {
+		if (e.target !== this.audioEl) return;
+		this.wrapperEl.style.setProperty('--progress', (this.audioEl.currentTime / this.audioEl.duration) * 100);
 	}
 
 	/**
