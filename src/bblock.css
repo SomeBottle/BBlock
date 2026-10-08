@@ -57,6 +57,7 @@
 .bblock-wrapper {
 	--progress: 0;
 	--progress-width: 0px;
+	--bblock-radius: .5em;
 	/* 边缘模糊半径 */
 	--edge-blur: 0px;
 	position: relative;
@@ -66,10 +67,12 @@
 	overflow: hidden;
 	margin: 10px;
 	padding: 5px;
-	border-radius: .5em;
+	border-radius: var(--bblock-radius);
 	transition: 1s ease;
 	border: 0px solid rgba(10, 10, 10, 0);
 	transition: --progress .5s ease;
+	/* 裁掉混合层在圆角边界产生的亮色像素，不然进度轨会露出一些亮色像素，很难看 */
+	clip-path: inset(0.5px round calc(var(--bblock-radius) - 0.5px));
 }
 
 .bblock-wrapper .edge-blur {
@@ -82,7 +85,7 @@
 	inset: 0;
 	pointer-events: none;
 	user-select: none;
-	border-radius: inherit;
+	border-radius: 0;
 	/* 模糊底层边缘 */
 	backdrop-filter: blur(var(--edge-blur));
 	mask:
@@ -129,7 +132,7 @@
 	--close: clamp(0, calc((var(--progress) - 96) / 4), 1);
 	/* 接近 100 时 fade 逐渐消失，闭合 */
 	--fade: calc(var(--base-fade) * (1 - var(--close)));
-	--progress-color: #0000003b;
+	--progress-color: #b0cbff61;
 
 	background:
 		conic-gradient(from -45deg,
@@ -146,6 +149,7 @@
 	mask-composite: exclude;
 
 	padding: var(--progress-width);
+	mix-blend-mode: difference;
 	transition: 0.5s ease;
 }
 
@@ -162,7 +166,13 @@
 	background-position: center center;
 	background-repeat: repeat;
 	box-sizing: border-box;
-	border: var(--progress-width) solid rgba(10, 10, 10, 0.3);
+	border: var(--progress-width) solid rgba(255, 255, 255, 0.25);
+	/* border: none; */
+	/* padding + background-origin 代替 border，实现开始播放时轻微缩小背景图片 */
+	/* padding: var(--progress-width); */
+	/* background-origin: content-box; */
+	/* 代替 border 的边缘颜色效果 */
+	/* box-shadow: inset 0 0 0 var(--progress-width) rgba(10, 10, 10, 0.3); */
 	transition: 0.5s ease;
 }
 
@@ -321,7 +331,7 @@
 
 /* 播放状态 */
 .state-playing {
-	--progress-width: 3px;
+	--progress-width: 3.5px;
 	--edge-blur: 6px;
 }
 
