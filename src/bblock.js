@@ -121,12 +121,13 @@ class BBlockPlayer {
 
 		// 状态标记
 		this.audioError = false; // 音频是否出错
+		this.firstPlay = true; // 是否首次播放
 
 		// 提示语队列
 		this.tipQueue = Promise.resolve();
 
 		// 最开始先进入加载状态
-		this.wrapperEl.classList.add('state-loading');
+		this.wrapperEl.classList.add('state-first-loading');
 
 		// 设置音频源 (src 肯定是有的)
 		this.audioEl.src = this.config.src;
@@ -163,23 +164,60 @@ class BBlockPlayer {
 		// 注册音频事件
 		this.audioEl.addEventListener('canplay', this._audioCanplayHandler.bind(this));
 		this.audioEl.addEventListener('waiting', this._audioWaitHandler.bind(this));
+		this.audioEl.addEventListener('play', this._audioPlayHandler.bind(this));
+		this.audioEl.addEventListener('pause', this._audioPauseHandler.bind(this));
 		this.audioEl.addEventListener('ended', this.pause.bind(this));
 		this.audioEl.addEventListener('error', this._audioErrorHandler.bind(this));
 		this.audioEl.addEventListener('timeupdate', BBlockPlayer.throttle(this._timeUpdateHandler.bind(this), 100));
 	}
 
+	/**
+	 * 音频等待时的处理函数
+	 * @param {Event} e 事件
+	 */
 	_audioWaitHandler(e) {
+		if (e.target !== this.audioEl) return;
+		this.wrapperEl.classList.add('state-loading');
+	}
 
+	/**
+	 * 音频播放时的处理函数
+	 * @param {Event} e 事件
+	 * @returns 
+	 */
+	_audioPlayHandler(e) {
+		if (e.target !== this.audioEl) return;
+		if (this.firstPlay) {
+			this.firstPlay = false;
+			// 首次播放时展示提示
+			this.tip('在此点击/悬停可进行调节', 1500);
+		}
+		// 如果音频状态还在载入中，展示加载状态
+		if (this.audioEl.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+			this.wrapperEl.classList.add('state-loading');
+		}
+	}
+
+	/**
+	 * 音频暂停时的处理函数
+	 * @param {Event} e 事件
+	 */
+	_audioPauseHandler(e) {
+		if (e.target !== this.audioEl) return;
+		// 暂停时移除加载状态
+		this.wrapperEl.classList.remove('state-loading');
 	}
 
 	/**
 	 * 音频播放出错时的处理函数
+	 * @param {Event} e 事件
 	 */
 	_audioErrorHandler(e) {
 		if (e.target !== this.audioEl) return;
 		this.audioError = true;
 		this.wrapperEl.classList.add('state-error');
 		this.wrapperEl.classList.remove('state-loading');
+		this.wrapperEl.classList.remove('state-first-loading');
 	}
 
 	/**
@@ -189,6 +227,7 @@ class BBlockPlayer {
 	_audioCanplayHandler(e) {
 		if (e.target !== this.audioEl) return;
 		this.wrapperEl.classList.remove('state-loading');
+		this.wrapperEl.classList.remove('state-first-loading');
 	}
 
 	/**

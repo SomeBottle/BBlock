@@ -187,18 +187,10 @@
 	height: 100%;
 	left: 0;
 	top: 0;
-	background: rgb(255 255 255 / 10%);
-	backdrop-filter: blur(5px);
 	transition: 0.5s ease;
 	opacity: 0;
 	user-select: none;
 	pointer-events: none;
-}
-
-.state-loading .loading {
-	opacity: 1;
-	pointer-events: auto;
-	user-select: auto;
 }
 
 .bblock-wrapper .loading svg {
@@ -225,7 +217,9 @@
 	width: 90%;
 	opacity: 0;
 	transform: translate(-50%, -50%);
-	text-shadow: 0 0 5px #101010;
+	text-shadow:
+		0 0 5px #101010,
+		0 0 6px #101010;
 	transition: opacity 0.5s ease;
 }
 
@@ -240,10 +234,65 @@
 	transition: opacity 0.5s ease;
 }
 
+.bblock-wrapper .controls {
+	position: absolute;
+	z-index: 4;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	opacity: 0;
+	backdrop-filter: blur(5px);
+	background-color: rgb(0 0 0 / 20%);
+	pointer-events: none;
+	user-select: none;
+	transition: opacity 0.5s ease;
+}
+
+.bblock-wrapper svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.bblock-wrapper .controls>.volume-icon {
+	position: absolute;
+	z-index: 4;
+	width: 35px;
+	height: 35px;
+	top: 50%;
+	left: 25%;
+	transform: translate(-50%, -50%);
+	color: #bdbdbd;
+	cursor: pointer;
+	transition: .4s ease;
+}
+
+.bblock-wrapper .controls>.progress-icon {
+	position: absolute;
+	z-index: 4;
+	width: 35px;
+	height: 35px;
+	top: 50%;
+	left: 75%;
+	transform: translate(-50%, -50%);
+	color: #bdbdbd;
+	cursor: pointer;
+	transition: .4s ease;
+}
+
+.bblock-wrapper .controls>.active-icon {
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%) scale(1.5);
+	opacity: 0.4;
+	pointer-events: none;
+	user-select: none;
+}
+
 .bblock-wrapper .play {
 	position: absolute;
 	z-index: 4;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 50'%3E%3Cpath d='M10 6L41 24L10 44Z' fill='none' stroke='%23fff' stroke-opacity='.71' stroke-width='9.5' stroke-linejoin='round'/%3E%3C/svg%3E");
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
@@ -258,12 +307,11 @@
 .bblock-wrapper .pause {
 	position: absolute;
 	z-index: 2;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 50'%3E%3Crect x='7' y='5' width='11' height='40' rx='4.5' fill='%23e8e8e8'/%3E%3Crect x='30' y='5' width='11' height='40' rx='4.5' fill='%23e8e8e8'/%3E%3C/svg%3E");
 	right: 6px;
 	bottom: 7px;
 	background-size: contain;
 	background-repeat: no-repeat;
-	filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.6));
+	filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.7));
 	height: 25px;
 	width: 25px;
 	cursor: pointer;
@@ -369,6 +417,35 @@
 }
 
 .state-error .pause {
+	opacity: 0 !important;
+	pointer-events: none !important;
+}
+
+/* 控件显示状态 */
+.controls-show .controls {
+	opacity: 1;
+	pointer-events: auto;
+	user-select: auto;
+}
+
+/* 首次加载状态 */
+.state-first-loading .loading {
+	opacity: 1;
+	background: rgb(255 255 255 / 10%);
+	backdrop-filter: blur(5px);
+	pointer-events: auto;
+	user-select: auto;
+}
+
+/* 普通音频加载状态 */
+.state-loading .loading {
+	opacity: 1;
+	pointer-events: auto;
+	user-select: auto;
+	filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.7));
+}
+
+.state-loading .pause {
 	opacity: 0 !important;
 	pointer-events: none !important;
 }

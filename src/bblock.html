@@ -2,13 +2,21 @@
     <div class="loading"><!--加载显示层-->
         <svg width="32" height="32" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
             <g transform="rotate(-90 60 60)">
-                <circle cx="60" cy="60" r="45" fill="none" stroke="#ffff" stroke-width="20" stroke-linecap="round" pathLength="100" stroke-dasharray="85 15" stroke-opacity=".61"></circle>
+                <circle cx="60" cy="60" r="45" fill="none" stroke="#ffff" stroke-width="20" stroke-linecap="round"
+                    pathLength="100" stroke-dasharray="85 15" stroke-opacity=".61"></circle>
             </g>
         </svg>
     </div>
     <div class="edge-blur"><!--边缘模糊效果层--></div>
-    <div class="play"><!--播放按钮--></div>
-    <div class="pause"><!--暂停按钮--></div>
+    <div class="play">
+        <!--播放按钮-->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50">
+            <g transform="translate(1 0)">
+                <path d="M10 6L41 24L10 44Z" fill="none" stroke="#fff" stroke-opacity=".71" stroke-width="9.5"
+                    stroke-linejoin="round" />
+            </g>
+        </svg>
+    </div>
     <!--半透明黑色的 cover -->
     <div class="cover">
         <div class="title-wrapper">
@@ -17,6 +25,39 @@
         <div class="artist-wrapper">
             <span class="artist">Kurisu Makise</span>
         </div>
+    </div>
+    <div class="controls">
+        <!--控制按钮层-->
+        <div class="volume-icon">
+            <!--音量调整图标-->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path
+                    d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+                <path d="M16 9a5 5 0 0 1 0 6" />
+                <path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
+            </svg>
+        </div>
+        <div class="progress-icon">
+            <!--进度调整图标-->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m18 8 4 4-4 4" />
+                <path d="M2 12h6" />
+                <path d="M16 12h6" />
+                <path d="m6 8-4 4 4 4" />
+                <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+            </svg>
+        </div>
+    </div>
+    <div class="pause">
+        <!--暂停按钮-->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50">
+            <g transform="translate(1 0)">
+                <rect x="7" y="5" width="11" height="40" rx="4.5" fill="#e8e8e8" />
+                <rect x="30" y="5" width="11" height="40" rx="4.5" fill="#e8e8e8" />
+            </g>
+        </svg>
     </div>
     <p class="tip">在此点击/悬停可进行调节</p>
     <audio src="" preload="auto"></audio>
