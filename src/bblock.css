@@ -245,8 +245,19 @@
 	backdrop-filter: blur(5px);
 	background-color: rgb(0 0 0 / 20%);
 	pointer-events: none;
-	user-select: none;
 	transition: opacity 0.5s ease;
+}
+
+.bblock-wrapper .controls>.bar {
+	position: absolute;
+	z-index: 4;
+	width: 0;
+	height: 100%;
+	left: 0;
+	top: 0;
+	background-color: rgba(5, 5, 5, 0.3);
+	transition: .4s ease;
+	cursor: pointer;
 }
 
 .bblock-wrapper svg {
@@ -287,7 +298,12 @@
 	transform: translate(-50%, -50%) scale(1.5);
 	opacity: 0.4;
 	pointer-events: none;
-	user-select: none;
+}
+
+.bblock-wrapper .controls>.hidden-icon {
+	opacity: 0;
+	z-index: -1;
+	pointer-events: none;
 }
 
 .bblock-wrapper .play {
@@ -425,7 +441,6 @@
 .controls-show .controls {
 	opacity: 1;
 	pointer-events: auto;
-	user-select: auto;
 }
 
 /* 首次加载状态 */

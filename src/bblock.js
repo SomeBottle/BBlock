@@ -1,6 +1,9 @@
 /* BBlock 2.0 Wow~you can really play! - SomeBottle*/
 
 class BBlockPlayer {
+	static CONTROLS_SHOW_DELAY = 1000; // 控制面板显示延迟时间，单位为毫秒
+	static CONTROLS_HIDE_DELAY = 3000; // 控制面板自动隐藏延迟时间，单位为毫秒
+
 	constructor(element, config) {
 		if (element instanceof Element) {
 			this.e = element;
@@ -116,12 +119,26 @@ class BBlockPlayer {
 		this.pauseEl = this.wrapperEl.querySelector('.pause');
 		this.audioEl = this.wrapperEl.querySelector('audio');
 		this.customBgEl = this.wrapperEl.querySelector('.custom-bg');
+		this.bgLayerEl = this.wrapperEl.querySelector('.bg-layer');
+		this.volumeIconEl = this.wrapperEl.querySelector('.volume-icon');
+		this.progressIconEl = this.wrapperEl.querySelector('.progress-icon');
+		this.controlsEl = this.wrapperEl.querySelector('.controls');
+		this.controlBarEl = this.wrapperEl.querySelector('.controls>.bar');
 		this.tipEl = this.wrapperEl.querySelector('.tip');
 		BBlockPlayer.style(this.e, { position: 'relative', display: 'inline-block', 'float': this.config.float || 'none' });
 
 		// 状态标记
 		this.audioError = false; // 音频是否出错
 		this.firstPlay = true; // 是否首次播放
+		this.dontShowControls = false; // 是否刚点击了播放按钮，用来防止刚点击播放就 mouseenter 背景了，导致控制面板不久后被展示
+		this.volumeControlling = false; // 是否正在进行音量调节
+		this.progressControlling = false; // 是否正在进行进度调节
+		this.barDragging = false; // 是否正在拖拽控制条
+		this.previousMousePos = { x: 0, y: 0 }; // 上一次鼠标位置，用于计算拖拽距离
+
+		// 计时器
+		this.controlsShowTimer = null; // 控制面板显示计时器
+		this.controlsHideTimer = null; // 控制面板自动隐藏计时器
 
 		// 提示语队列
 		this.tipQueue = Promise.resolve();
@@ -169,6 +186,33 @@ class BBlockPlayer {
 		this.audioEl.addEventListener('ended', this.pause.bind(this));
 		this.audioEl.addEventListener('error', this._audioErrorHandler.bind(this));
 		this.audioEl.addEventListener('timeupdate', BBlockPlayer.throttle(this._timeUpdateHandler.bind(this), 100));
+		// 注册控制层展开相关的鼠标事件
+		this.bgLayerEl.addEventListener('click', this._bgMouseClickHandler.bind(this));
+		if ("PointerEvent" in window) {
+			this.pauseEl.addEventListener('pointerenter', this._pauseMouseEnterHandler.bind(this));
+			this.bgLayerEl.addEventListener('pointerenter', this._bgMouseEnterHandler.bind(this));
+			this.wrapperEl.addEventListener('pointerleave', this._wrapperMouseLeaveHandler.bind(this));
+		} else {
+			this.pauseEl.addEventListener('mouseenter', this._pauseMouseEnterHandler.bind(this));
+			this.bgLayerEl.addEventListener('mouseenter', this._bgMouseEnterHandler.bind(this));
+			this.wrapperEl.addEventListener('mouseleave', this._wrapperMouseLeaveHandler.bind(this));
+		}
+		// 注册控制相关事件
+		if ("TouchEvent" in window) {
+			this.volumeIconEl.addEventListener('touchstart', this._volumeIconMouseDownHandler.bind(this));
+			this.progressIconEl.addEventListener('touchstart', this._progressIconMouseDownHandler.bind(this));
+			this.controlsEl.addEventListener('touchstart', this._controlsMouseDownHandler.bind(this));
+			window.addEventListener('touchmove', BBlockPlayer.throttle(this._windowMouseMoveHandler.bind(this), 100));
+			window.addEventListener('touchend', this._windowMouseUpHandler.bind(this));
+		}
+		this.volumeIconEl.addEventListener('mousedown', this._volumeIconMouseDownHandler.bind(this));
+		this.volumeIconEl.addEventListener('dragstart', this._dragStartHandler.bind(this));
+		this.progressIconEl.addEventListener('mousedown', this._progressIconMouseDownHandler.bind(this));
+		this.progressIconEl.addEventListener('dragstart', this._dragStartHandler.bind(this));
+		this.controlsEl.addEventListener('mousedown', this._controlsMouseDownHandler.bind(this));
+		this.controlsEl.addEventListener('dragstart', this._dragStartHandler.bind(this));
+		window.addEventListener('mousemove', BBlockPlayer.throttle(this._windowMouseMoveHandler.bind(this), 100));
+		window.addEventListener('mouseup', this._windowMouseUpHandler.bind(this));
 	}
 
 	/**
@@ -206,6 +250,8 @@ class BBlockPlayer {
 		if (e.target !== this.audioEl) return;
 		// 暂停时移除加载状态
 		this.wrapperEl.classList.remove('state-loading');
+		// 隐藏控制面板
+		this.hideControls();
 	}
 
 	/**
@@ -218,6 +264,7 @@ class BBlockPlayer {
 		this.wrapperEl.classList.add('state-error');
 		this.wrapperEl.classList.remove('state-loading');
 		this.wrapperEl.classList.remove('state-first-loading');
+		this.hideControls();
 	}
 
 	/**
@@ -234,7 +281,7 @@ class BBlockPlayer {
 	 * 鼠标移入封皮时的处理函数
 	 */
 	_coverMouseEnterHandler(e) {
-		if (e.target !== this.coverEl) return; // 只在鼠标移入封皮时触发
+		if (!this.coverEl.contains(e.target)) return; // 只在鼠标移入封皮时触发
 		// 如果音频出错了，就提示用户
 		if (this.audioError) {
 			this.tip('音频开小差了 :(');
@@ -247,6 +294,201 @@ class BBlockPlayer {
 	_timeUpdateHandler(e) {
 		if (e.target !== this.audioEl) return;
 		this.wrapperEl.style.setProperty('--progress', (this.audioEl.currentTime / this.audioEl.duration) * 100);
+	}
+
+	/**
+	 * 鼠标移入背景时的处理函数
+	 */
+	_bgMouseEnterHandler(e) {
+		if (!this.bgLayerEl.contains(e.target)) return;
+		this.readyToShowControls();
+	}
+
+	/**
+	 * 鼠标点击背景时的处理函数
+	 * 这个处理函数主要是为了防止用户点击播放按钮后，控制面板立即显示
+	 */
+	_bgMouseClickHandler(e) {
+		if (!this.bgLayerEl.contains(e.target)) return;
+		// 如果是再次点击，就重置标记位
+		// 这样点完播放按钮，控制面板不会立即显示，但是我可以再点击一次来显示控制面板
+		this.dontShowControls = false;
+		this.readyToShowControls();
+	}
+
+	/**
+	 * 鼠标移入暂停按钮时的处理函数
+	 */
+	_pauseMouseEnterHandler(e) {
+		if (!this.pauseEl.contains(e.target)) return;
+		// 鼠标移入暂停按钮时，不显示控制面板
+		this.hideControls();
+	}
+
+	/**
+	 * 鼠标移出播放器时的处理函数
+	 */
+	_wrapperMouseLeaveHandler(e) {
+		if (!this.wrapperEl.contains(e.target)) return;
+		if (this.volumeControlling || this.progressControlling) {
+			// 如果正在调节音量或进度，就不隐藏控制面板
+			return;
+		}
+		// 鼠标移出播放器时，隐藏控制面板
+		this.hideControls();
+	}
+
+	/**
+	 * 阻止拖拽事件的默认行为，避免拖拽时出现选中状态
+	 * @param {Event} e 事件
+	 */
+	_dragStartHandler(e) {
+		if (!this.wrapperEl.contains(e.target)) return;
+		e.preventDefault();
+	}
+
+	/**
+	 * 鼠标在音量图标上按下时的处理函数
+	 * 按下后转换为音量调节控制模式
+	 */
+	_volumeIconMouseDownHandler(e) {
+		if (!this.volumeIconEl.contains(e.target)) return;
+		this.volumeControlling = true;
+		this.volumeIconEl.classList.add('active-icon');
+		this.progressIconEl.classList.add('hidden-icon');
+		this.controlBarEl.style.width = `${this.audioEl.volume * 100}%`;
+		this._controlsMouseDownHandler(e);
+	}
+
+	/**
+	 * 鼠标在进度图标上按下时的处理函数
+	 * 按下后转换为进度调节控制模式
+	 * @param {Event} e 事件
+	 * @returns
+	 */
+	_progressIconMouseDownHandler(e) {
+		if (!this.progressIconEl.contains(e.target)) return;
+		this.progressControlling = true;
+		this.progressIconEl.classList.add('active-icon');
+		this.volumeIconEl.classList.add('hidden-icon');
+		this.controlBarEl.style.width = `${(this.audioEl.currentTime / this.audioEl.duration) * 100}%`;
+		this._controlsMouseDownHandler(e);
+	}
+
+	/**
+	 * 鼠标在控制层上按下时的处理函数
+	 * 只要用户鼠标还在控制层，就算鼠标松开了也可以重新开始拖拽
+	 * @param {Event} e 事件
+	 * @returns
+	 */
+	_controlsMouseDownHandler(e) {
+		if (!this.wrapperEl.contains(e.target)) return;
+		if (!this.volumeControlling && !this.progressControlling) return;
+		this.barDragging = true;
+		// 开始拖拽时重置一下鼠标位置，避免拖拽时出现跳跃
+		this.previousMousePos = this._getMousePos(e);
+	}
+
+	/**
+	 * 鼠标在窗口上移动时的处理函数
+	 * 主要是为了处理音量和进度调节的拖拽操作
+	 * @param {Event} e 事件
+	 * @returns
+	 */
+	_windowMouseMoveHandler(e) {
+		// 鼠标在面板内移动，重置面板自动隐藏定时器
+		if (this.wrapperEl.contains(e.target) && this.controlsHideTimer !== null) {
+			this._setControlsHideTimer();
+		}
+		let { x: clientX, y: clientY } = this._getMousePos(e);
+		if (!this.barDragging) {
+			// 没有在拖拽时，不处理
+			this.previousMousePos = { x: clientX, y: clientY };
+			// 如果这个时候鼠标移出控制面板，就隐藏面板
+			if (!this.wrapperEl.contains(e.target)) {
+				this.hideControls();
+			}
+			return;
+		}
+		let deltaX = clientX - this.previousMousePos.x;
+		if (this.volumeControlling) {
+			// 音量调节
+			this.audioEl.volume = Math.min(Math.max(this.audioEl.volume + deltaX * 0.01, 0), 1);
+			this.controlBarEl.style.width = `${this.audioEl.volume * 100}%`;
+		} else if (this.progressControlling) {
+			// 进度调节
+			const audioDuration = this.audioEl.duration;
+			const playerWidth = this.wrapperEl.clientWidth;
+			this.audioEl.currentTime = Math.min(Math.max(this.audioEl.currentTime + (audioDuration / playerWidth * deltaX), 0), this.audioEl.duration - 0.01);
+			this.controlBarEl.style.width = `${(this.audioEl.currentTime / audioDuration) * 100}%`;
+		}
+		this.previousMousePos = { x: clientX, y: clientY };
+	}
+
+	/**
+	 * 获取鼠标位置
+	 * @param {MouseEvent|TouchEvent|PointerEvent} e 鼠标事件
+	 * @returns {Object} 鼠标位置 {x: number, y: number}
+	 */
+	_getMousePos(e) {
+		if (!(e instanceof MouseEvent) && !("TouchEvent" in window && e instanceof TouchEvent) && !("PointerEvent" in window && e instanceof PointerEvent)) {
+			return { x: -1, y: -1 };
+		}
+		let clientX, clientY;
+		if ("touches" in e) {
+			if (e.touches.length > 0) {
+				clientX = e.touches[0].clientX;
+				clientY = e.touches[0].clientY;
+			} else if (e.changedTouches.length > 0) {
+				clientX = e.changedTouches[0].clientX;
+				clientY = e.changedTouches[0].clientY;
+			}
+		} else {
+			clientX = e.clientX;
+			clientY = e.clientY;
+		}
+		return { x: clientX, y: clientY }
+	}
+
+	/**
+	 * 鼠标在窗口上松开时的处理函数
+	 * 主要是为了结束音量和进度调节的拖拽操作
+	 * @param {Event} e 事件
+	 * @returns
+	 */
+	_windowMouseUpHandler(e) {
+		if (!this.volumeControlling && !this.progressControlling) {
+			return;
+		}
+		// 松开鼠标肯定停止拖拽了
+		this.barDragging = false;
+		// 如果鼠标在控制面板内松开，就不结束调节状态，用户可能还想继续调节
+		if (this.wrapperEl.contains(e.target)) {
+			// 设立一个定时器，一段时间没动作就自动隐藏控制面板
+			this._setControlsHideTimer();
+			return;
+		}
+		// 鼠标在控制面板外松开，就结束调节状态
+		this.volumeControlling = false;
+		this.progressControlling = false;
+		this.hideControls();
+	}
+
+	/**
+	 * 设置控制面板自动隐藏的计时器
+	 * 这个方法会清除之前的计时器，重新设置一个新的计时器
+	 * 计时器时间为 3 秒
+	 * @returns
+	 */
+	_setControlsHideTimer() {
+		if (this.controlsHideTimer !== null) {
+			clearTimeout(this.controlsHideTimer);
+			this.controlsHideTimer = null;
+		}
+		this.controlsHideTimer = setTimeout(() => {
+			this.hideControls();
+			this.controlsHideTimer = null;
+		}, BBlockPlayer.CONTROLS_HIDE_DELAY);
 	}
 
 	/**
@@ -263,6 +505,7 @@ class BBlockPlayer {
 			// 播放失败，通常不会有这种情况，因此直接标记为 error
 			this._audioErrorHandler();
 		});
+		this.dontShowControls = true;
 	}
 
 	/**
@@ -272,8 +515,58 @@ class BBlockPlayer {
 		BBlockPlayer.style(this.pauseEl, { opacity: '0', pointerEvents: 'none' });
 		BBlockPlayer.waitTransitionEnd(this.pauseEl).then(() => {
 			this.wrapperEl.classList.remove('state-playing');
+			// 暂停时也隐藏控制面板
+			this.hideControls();
 		});
 		this.audioEl.pause();
+	}
+
+	/**
+	 * 准备展示控制面板
+	 */
+	readyToShowControls() {
+		if (this.dontShowControls) {
+			// 如果刚点击了播放按钮，就不展示控制面板，避免刚点击播放就 mouseenter 背景了，导致控制面板不久后被展示
+			this.dontShowControls = false;
+			return;
+		}
+		if (this.controlsShowTimer !== null) {
+			// 如果计时器已经存在
+			clearTimeout(this.controlsShowTimer);
+			this.controlsShowTimer = null;
+		}
+		this.controlsShowTimer = setTimeout(() => {
+			this.wrapperEl.classList.add('controls-show');
+			this.controlsShowTimer = null;
+		}, BBlockPlayer.CONTROLS_SHOW_DELAY);
+		this._setControlsHideTimer();
+	}
+
+	/**
+	 * 隐藏控制面板
+	 */
+	hideControls() {
+		if (this.controlsShowTimer !== null) {
+			clearTimeout(this.controlsShowTimer);
+			this.controlsShowTimer = null;
+		}
+		if (this.controlsHideTimer !== null) {
+			clearTimeout(this.controlsHideTimer);
+			this.controlsHideTimer = null;
+		}
+		this.wrapperEl.classList.remove('controls-show');
+		// 图标也要复位
+		this.volumeIconEl.classList.remove('active-icon');
+		this.progressIconEl.classList.remove('active-icon');
+		this.volumeIconEl.classList.remove('hidden-icon');
+		this.progressIconEl.classList.remove('hidden-icon');
+		// 拖拽条复位
+		this.controlBarEl.style.width = '0%';
+		// 控制状态复位
+		this.volumeControlling = false;
+		this.progressControlling = false;
+		this.dontShowControls = false;
+		this.barDragging = false;
 	}
 };
 
