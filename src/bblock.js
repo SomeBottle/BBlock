@@ -2,7 +2,7 @@
 
 class BBlockPlayer {
 	static CONTROLS_SHOW_DELAY = 1000; // 控制面板显示延迟时间，单位为毫秒
-	static CONTROLS_RETURN_DELAY = 2000; // 控制面板自动隐藏延迟时间，单位为毫秒
+	static CONTROLS_RETURN_DELAY = 3000; // 控制面板自动隐藏延迟时间，单位为毫秒
 
 	constructor(element, config) {
 		if (element instanceof Element) {
@@ -387,6 +387,8 @@ class BBlockPlayer {
 		this.barDragging = true;
 		// 开始拖拽时重置一下鼠标位置，避免拖拽时出现跳跃
 		this.previousMousePos = this._getMousePos(e);
+		// 重置面板回撤计时器
+		this._setControlsReturnTimer();
 	}
 
 	/**
@@ -536,9 +538,9 @@ class BBlockPlayer {
 		}
 		this.controlsShowTimer = setTimeout(() => {
 			this.wrapperEl.classList.add('controls-show');
+			this._setControlsReturnTimer();
 			this.controlsShowTimer = null;
 		}, BBlockPlayer.CONTROLS_SHOW_DELAY);
-		this._setControlsReturnTimer();
 	}
 
 	/**
