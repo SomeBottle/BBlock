@@ -2,7 +2,7 @@
 
 class BBlockPlayer {
 	static CONTROLS_SHOW_DELAY = 1000; // 控制面板显示延迟时间，单位为毫秒
-	static CONTROLS_HIDE_DELAY = 3000; // 控制面板自动隐藏延迟时间，单位为毫秒
+	static CONTROLS_RETURN_DELAY = 2000; // 控制面板自动隐藏延迟时间，单位为毫秒
 
 	constructor(element, config) {
 		if (element instanceof Element) {
@@ -11,7 +11,7 @@ class BBlockPlayer {
 		} else {
 			throw new Error('BBlockPlayer: The first argument must be an Element.');
 		}
-		this.init();
+		this._init();
 	}
 
 	/**
@@ -75,7 +75,7 @@ class BBlockPlayer {
 	/**
 	 * 检查 BBlock CSS 是否应用到页面中
 	 */
-	checkCSS() {
+	_checkCSS() {
 		let styleEl = document.head.getElementsByClassName('bblock-css')[0];
 		if (!styleEl) {
 			styleEl = document.createElement('style');
@@ -92,7 +92,7 @@ class BBlockPlayer {
 	 * @param {string} message 提示信息
 	 * @param {number} duration 提示信息显示的时间，单位为毫秒，默认 1000 毫秒
 	 */
-	tip(message, duration = 1000) {
+	_tip(message, duration = 1000) {
 		const tipEl = this.tipEl;
 		this.tipQueue = this.tipQueue.then(() => {
 			return new Promise((resolve) => {
@@ -106,9 +106,9 @@ class BBlockPlayer {
 		});
 	}
 
-	init() {
+	_init() {
 		// 检查 CSS 是否已应用
-		this.checkCSS();
+		this._checkCSS();
 		this.e.innerHTML = `{{HTML}}`;
 		this.wrapperEl = this.e.querySelector('.bblock-wrapper');
 		this.coverEl = this.wrapperEl.querySelector('.cover');
@@ -138,7 +138,7 @@ class BBlockPlayer {
 
 		// 计时器
 		this.controlsShowTimer = null; // 控制面板显示计时器
-		this.controlsHideTimer = null; // 控制面板自动隐藏计时器
+		this.controlsReturnTimer = null; // 控制面板自动回撤计时器
 
 		// 提示语队列
 		this.tipQueue = Promise.resolve();
@@ -234,7 +234,7 @@ class BBlockPlayer {
 		if (this.firstPlay) {
 			this.firstPlay = false;
 			// 首次播放时展示提示
-			this.tip('在此点击/悬停可进行调节', 1500);
+			this._tip('在此点击/悬停可进入拖拽面板', 1500);
 		}
 		// 如果音频状态还在载入中，展示加载状态
 		if (this.audioEl.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
@@ -251,7 +251,7 @@ class BBlockPlayer {
 		// 暂停时移除加载状态
 		this.wrapperEl.classList.remove('state-loading');
 		// 隐藏控制面板
-		this.hideControls();
+		this._hideControls();
 	}
 
 	/**
@@ -264,7 +264,7 @@ class BBlockPlayer {
 		this.wrapperEl.classList.add('state-error');
 		this.wrapperEl.classList.remove('state-loading');
 		this.wrapperEl.classList.remove('state-first-loading');
-		this.hideControls();
+		this._hideControls();
 	}
 
 	/**
@@ -284,7 +284,7 @@ class BBlockPlayer {
 		if (!this.coverEl.contains(e.target)) return; // 只在鼠标移入封皮时触发
 		// 如果音频出错了，就提示用户
 		if (this.audioError) {
-			this.tip('音频开小差了 :(');
+			this._tip('音频开小差了 :(');
 		}
 	}
 
@@ -301,7 +301,7 @@ class BBlockPlayer {
 	 */
 	_bgMouseEnterHandler(e) {
 		if (!this.bgLayerEl.contains(e.target)) return;
-		this.readyToShowControls();
+		this._readyToShowControls();
 	}
 
 	/**
@@ -313,7 +313,7 @@ class BBlockPlayer {
 		// 如果是再次点击，就重置标记位
 		// 这样点完播放按钮，控制面板不会立即显示，但是我可以再点击一次来显示控制面板
 		this.dontShowControls = false;
-		this.readyToShowControls();
+		this._readyToShowControls();
 	}
 
 	/**
@@ -322,7 +322,7 @@ class BBlockPlayer {
 	_pauseMouseEnterHandler(e) {
 		if (!this.pauseEl.contains(e.target)) return;
 		// 鼠标移入暂停按钮时，不显示控制面板
-		this.hideControls();
+		this._hideControls();
 	}
 
 	/**
@@ -335,7 +335,7 @@ class BBlockPlayer {
 			return;
 		}
 		// 鼠标移出播放器时，隐藏控制面板
-		this.hideControls();
+		this._hideControls();
 	}
 
 	/**
@@ -397,8 +397,8 @@ class BBlockPlayer {
 	 */
 	_windowMouseMoveHandler(e) {
 		// 鼠标在面板内移动，重置面板自动隐藏定时器
-		if (this.wrapperEl.contains(e.target) && this.controlsHideTimer !== null) {
-			this._setControlsHideTimer();
+		if (this.wrapperEl.contains(e.target) && this.controlsReturnTimer !== null) {
+			this._setControlsReturnTimer();
 		}
 		let { x: clientX, y: clientY } = this._getMousePos(e);
 		if (!this.barDragging) {
@@ -406,7 +406,7 @@ class BBlockPlayer {
 			this.previousMousePos = { x: clientX, y: clientY };
 			// 如果这个时候鼠标移出控制面板，就隐藏面板
 			if (!this.wrapperEl.contains(e.target)) {
-				this.hideControls();
+				this._hideControls();
 			}
 			return;
 		}
@@ -465,30 +465,29 @@ class BBlockPlayer {
 		// 如果鼠标在控制面板内松开，就不结束调节状态，用户可能还想继续调节
 		if (this.wrapperEl.contains(e.target)) {
 			// 设立一个定时器，一段时间没动作就自动隐藏控制面板
-			this._setControlsHideTimer();
+			this._setControlsReturnTimer();
 			return;
 		}
 		// 鼠标在控制面板外松开，就结束调节状态
 		this.volumeControlling = false;
 		this.progressControlling = false;
-		this.hideControls();
+		this._hideControls();
 	}
 
 	/**
-	 * 设置控制面板自动隐藏的计时器
+	 * 设置控制面板自动回撤的计时器
 	 * 这个方法会清除之前的计时器，重新设置一个新的计时器
 	 * 计时器时间为 3 秒
 	 * @returns
 	 */
-	_setControlsHideTimer() {
-		if (this.controlsHideTimer !== null) {
-			clearTimeout(this.controlsHideTimer);
-			this.controlsHideTimer = null;
+	_setControlsReturnTimer() {
+		if (this.controlsReturnTimer !== null) {
+			clearTimeout(this.controlsReturnTimer);
+			this.controlsReturnTimer = null;
 		}
-		this.controlsHideTimer = setTimeout(() => {
-			this.hideControls();
-			this.controlsHideTimer = null;
-		}, BBlockPlayer.CONTROLS_HIDE_DELAY);
+		this.controlsReturnTimer = setTimeout(() => {
+			this._returnControls();
+		}, BBlockPlayer.CONTROLS_RETURN_DELAY);
 	}
 
 	/**
@@ -501,7 +500,7 @@ class BBlockPlayer {
 		});
 		this.audioEl.play().catch((err) => {
 			console.error('Audio play failed:', err);
-			this.tip('播放失败 :(');
+			this._tip('播放失败 :(');
 			// 播放失败，通常不会有这种情况，因此直接标记为 error
 			this._audioErrorHandler();
 		});
@@ -516,7 +515,7 @@ class BBlockPlayer {
 		BBlockPlayer.waitTransitionEnd(this.pauseEl).then(() => {
 			this.wrapperEl.classList.remove('state-playing');
 			// 暂停时也隐藏控制面板
-			this.hideControls();
+			this._hideControls();
 		});
 		this.audioEl.pause();
 	}
@@ -524,7 +523,7 @@ class BBlockPlayer {
 	/**
 	 * 准备展示控制面板
 	 */
-	readyToShowControls() {
+	_readyToShowControls() {
 		if (this.dontShowControls) {
 			// 如果刚点击了播放按钮，就不展示控制面板，避免刚点击播放就 mouseenter 背景了，导致控制面板不久后被展示
 			this.dontShowControls = false;
@@ -539,32 +538,55 @@ class BBlockPlayer {
 			this.wrapperEl.classList.add('controls-show');
 			this.controlsShowTimer = null;
 		}, BBlockPlayer.CONTROLS_SHOW_DELAY);
-		this._setControlsHideTimer();
+		this._setControlsReturnTimer();
 	}
 
 	/**
-	 * 隐藏控制面板
+	 * 回撤到控制面板的上一个状态。目前有调节状态和非调节状态两种状态，位于非调节状态再回撤时，则会关闭面板。
+	 * 
+	 * 这个主要是搭配 ControlsReturnTimer 使用的，计时器到时间后会调用这个方法来回撤控制面板的状态。
 	 */
-	hideControls() {
-		if (this.controlsShowTimer !== null) {
-			clearTimeout(this.controlsShowTimer);
-			this.controlsShowTimer = null;
+	_returnControls() {
+		if (this.volumeControlling || this.progressControlling) {
+			// 如果正在调节音量或进度，就结束调节状态
+			this._stopControlling();
+			// 再设定一次计时器，准备下一次回撤
+			this._setControlsReturnTimer();
+		} else {
+			// 如果不在调节状态，就隐藏控制面板
+			this._hideControls();
 		}
-		if (this.controlsHideTimer !== null) {
-			clearTimeout(this.controlsHideTimer);
-			this.controlsHideTimer = null;
-		}
-		this.wrapperEl.classList.remove('controls-show');
-		// 图标也要复位
+	}
+
+	/**
+	 * 结束所有控制状态，恢复到非调节状态的控制面板
+	 */
+	_stopControlling() {
+		this.volumeControlling = false;
+		this.progressControlling = false;
 		this.volumeIconEl.classList.remove('active-icon');
 		this.progressIconEl.classList.remove('active-icon');
 		this.volumeIconEl.classList.remove('hidden-icon');
 		this.progressIconEl.classList.remove('hidden-icon');
 		// 拖拽条复位
 		this.controlBarEl.style.width = '0%';
+	}
+
+	/**
+	 * 隐藏控制面板
+	 */
+	_hideControls() {
+		if (this.controlsShowTimer !== null) {
+			clearTimeout(this.controlsShowTimer);
+			this.controlsShowTimer = null;
+		}
+		if (this.controlsReturnTimer !== null) {
+			clearTimeout(this.controlsReturnTimer);
+			this.controlsReturnTimer = null;
+		}
+		this.wrapperEl.classList.remove('controls-show');
 		// 控制状态复位
-		this.volumeControlling = false;
-		this.progressControlling = false;
+		this._stopControlling();
 		this.dontShowControls = false;
 		this.barDragging = false;
 	}
