@@ -117,6 +117,7 @@ class BBlockPlayer {
 		this.artistEl = this.wrapperEl.querySelector('.artist');
 		this.playEl = this.wrapperEl.querySelector('.play');
 		this.pauseEl = this.wrapperEl.querySelector('.pause');
+		this.reloadEl = this.wrapperEl.querySelector('.reload');
 		this.audioEl = this.wrapperEl.querySelector('audio');
 		this.customBgEl = this.wrapperEl.querySelector('.custom-bg');
 		this.bgLayerEl = this.wrapperEl.querySelector('.bg-layer');
@@ -129,6 +130,7 @@ class BBlockPlayer {
 
 		// 状态标记
 		this.audioError = false; // 音频是否出错
+		this.audioReloading = false; // 是否在重载音频
 		this.firstPlay = true; // 是否首次播放
 		this.dontShowControls = false; // 是否刚点击了播放按钮，用来防止刚点击播放就 mouseenter 背景了，导致控制面板不久后被展示
 		this.volumeControlling = false; // 是否正在进行音量调节
@@ -176,8 +178,7 @@ class BBlockPlayer {
 		// 注册鼠标事件
 		this.playEl.addEventListener('click', this.play.bind(this));
 		this.pauseEl.addEventListener('click', this.pause.bind(this));
-		// 鼠标移入封皮时的处理主要是用于提醒用户音频出错了，这里节流避免频繁触发
-		this.coverEl.addEventListener('mouseenter', BBlockPlayer.throttle(this._coverMouseEnterHandler.bind(this), 2000));
+		this.reloadEl.addEventListener('click', this._reloadClickHandler.bind(this));
 		// 注册音频事件
 		this.audioEl.addEventListener('canplay', this._audioCanplayHandler.bind(this));
 		this.audioEl.addEventListener('waiting', this._audioWaitHandler.bind(this));
@@ -261,6 +262,10 @@ class BBlockPlayer {
 	_audioErrorHandler(e) {
 		if (e.target !== this.audioEl) return;
 		this.audioError = true;
+		if (this.audioReloading) {
+			// 如果是重载时失败也提示一下
+			this._tip("音频载入失败 :(");
+		}
 		this.wrapperEl.classList.add('state-error');
 		this.wrapperEl.classList.remove('state-loading');
 		this.wrapperEl.classList.remove('state-first-loading');
@@ -273,19 +278,9 @@ class BBlockPlayer {
 	 */
 	_audioCanplayHandler(e) {
 		if (e.target !== this.audioEl) return;
+		this.audioReloading = false; // 重置重载状态
 		this.wrapperEl.classList.remove('state-loading');
 		this.wrapperEl.classList.remove('state-first-loading');
-	}
-
-	/**
-	 * 鼠标移入封皮时的处理函数
-	 */
-	_coverMouseEnterHandler(e) {
-		if (!this.coverEl.contains(e.target)) return; // 只在鼠标移入封皮时触发
-		// 如果音频出错了，就提示用户
-		if (this.audioError) {
-			this._tip('音频开小差了 :(');
-		}
 	}
 
 	/**
@@ -294,6 +289,19 @@ class BBlockPlayer {
 	_timeUpdateHandler(e) {
 		if (e.target !== this.audioEl) return;
 		this.wrapperEl.style.setProperty('--progress', (this.audioEl.currentTime / this.audioEl.duration) * 100);
+	}
+
+	/**
+	 * 点击重新加载按钮时的处理函数
+	 */
+	_reloadClickHandler(e) {
+		if (!this.reloadEl.contains(e.target)) return;
+		this.audioError = false;
+		this.audioReloading = true; // 标记正在重载
+		this.wrapperEl.classList.remove('state-error');
+		// 回到最初的载入状态
+		this.wrapperEl.classList.add('state-first-loading');
+		this.audioEl.load();
 	}
 
 	/**
