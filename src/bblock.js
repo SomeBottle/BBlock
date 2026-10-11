@@ -315,6 +315,21 @@ class BBlockPlayer {
 			// 首次播放时展示提示
 			this._tip(this._text('audio_first_play'), 1500);
 		}
+		this._setPlayerPlayingState();
+	}
+
+	/**
+	 * 设置播放器为播放状态
+	 */
+	_setPlayerPlayingState() {
+		const transitionToken = ++this._playbackTransitionToken;
+		this._wrapperEl.classList.add('edge-blur-active');
+		this._wrapperEl.classList.add('state-playing');
+		BBlockPlayer.waitTransitionEnd(this._playEl, 'opacity').then(() => {
+			// transitionToken 发生变化说明这个过程中发生了别的过渡（通常是快速点到了暂停按钮），这个过渡被取消了
+			if (transitionToken !== this._playbackTransitionToken) return;
+			BBlockPlayer.style(this._pauseEl, { opacity: '1', pointerEvents: 'auto' });
+		});
 		// 如果音频状态还在载入中，展示加载状态
 		if (this._audioEl.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
 			this._wrapperEl.classList.add('state-loading');
@@ -327,10 +342,26 @@ class BBlockPlayer {
 	 */
 	_audioPauseHandler(e) {
 		if (e.target !== this._audioEl) return;
+		this._setPlayerPausedState();
+	}
+
+	/**
+	 * 设置播放器为暂停状态
+	 */
+	_setPlayerPausedState() {
 		// 暂停时移除加载状态
 		this._wrapperEl.classList.remove('state-loading');
 		// 隐藏控制面板
 		this._hideControls();
+		const transitionToken = ++this._playbackTransitionToken;
+		BBlockPlayer.style(this._pauseEl, { opacity: '0', pointerEvents: 'none' });
+		BBlockPlayer.waitTransitionEnd(this._pauseEl, 'opacity').then(() => {
+			if (transitionToken !== this._playbackTransitionToken) return;
+			this._wrapperEl.classList.remove('edge-blur-active');
+			this._wrapperEl.classList.remove('state-playing');
+			// 暂停时也隐藏控制面板
+			this._hideControls();
+		});
 	}
 
 	/**
@@ -339,13 +370,13 @@ class BBlockPlayer {
 	 */
 	_audioErrorHandler(e) {
 		if (e && e.target !== this._audioEl) return;
-		this._setAudioErrorState();
+		this._setPlayerErrorState();
 	}
 
 	/**
 	 * 设置状态为音频播放出错
 	 */
-	_setAudioErrorState() {
+	_setPlayerErrorState() {
 		this._playbackTransitionToken++;
 		this._audioError = true;
 		if (this._audioReloading) {
@@ -640,21 +671,11 @@ class BBlockPlayer {
 	 * 播放音频
 	 */
 	play() {
-		const transitionToken = ++this._playbackTransitionToken;
-		this._wrapperEl.classList.add('edge-blur-active');
-		this._wrapperEl.classList.add('state-playing');
-		BBlockPlayer.waitTransitionEnd(this._playEl, 'opacity').then(() => {
-			// transitionToken 发生变化说明这个过程中发生了别的过渡（通常是快速点到了暂停按钮），这个过渡被取消了
-			if (transitionToken !== this._playbackTransitionToken) return;
-			BBlockPlayer.style(this._pauseEl, { opacity: '1', pointerEvents: 'auto' });
-		});
 		this._audioEl.play().catch((err) => {
-			// 同上，transitionToken 发生变化则取消播放
-			if (transitionToken !== this._playbackTransitionToken) return;
 			console.error('Audio play failed:', err);
 			this._tip(this._text('audio_play_error'));
 			// 播放失败，通常不会有这种情况，因此直接标记为 error
-			this._setAudioErrorState();
+			this._setPlayerErrorState();
 		});
 		this._dontShowControls = true;
 	}
@@ -663,15 +684,6 @@ class BBlockPlayer {
 	 * 暂停音频
 	 */
 	pause() {
-		const transitionToken = ++this._playbackTransitionToken;
-		BBlockPlayer.style(this._pauseEl, { opacity: '0', pointerEvents: 'none' });
-		BBlockPlayer.waitTransitionEnd(this._pauseEl, 'opacity').then(() => {
-			if (transitionToken !== this._playbackTransitionToken) return;
-			this._wrapperEl.classList.remove('edge-blur-active');
-			this._wrapperEl.classList.remove('state-playing');
-			// 暂停时也隐藏控制面板
-			this._hideControls();
-		});
 		this._audioEl.pause();
 	}
 
