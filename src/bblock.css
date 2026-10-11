@@ -57,6 +57,7 @@
 	border: 0px solid rgba(10, 10, 10, 0);
 	transition: --progress 0.5s ease;
 	/* 裁掉混合层在圆角边界产生的亮色像素，不然进度轨会露出一些亮色像素，很难看 */
+	-webkit-clip-path: inset(0.5px round calc(var(--bblock-radius) - 0.5px));
 	clip-path: inset(0.5px round calc(var(--bblock-radius) - 0.5px));
 }
 
@@ -95,7 +96,8 @@
 	/* background-origin: content-box; */
 	/* 代替 border 的边缘颜色效果 */
 	/* box-shadow: inset 0 0 0 var(--progress-width) rgba(10, 10, 10, 0.3); */
-	transition: 0.5s ease;
+	/* 只过渡播放状态会改变的边框宽度，避免对整层做 all 过渡 */
+	transition: border-width 0.5s ease;
 }
 
 .bblock-wrapper .custom-bg {
@@ -109,28 +111,68 @@
 	--fade: 14px;
 	position: absolute;
 	z-index: 2;
+	/* inset 的回退写法，兼容较旧的 WebView */
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
 	inset: 0;
 	pointer-events: none;
+	-webkit-user-select: none;
 	user-select: none;
 	border-radius: 0;
 	/* 模糊底层边缘 */
+	-webkit-backdrop-filter: blur(var(--edge-blur));
 	backdrop-filter: blur(var(--edge-blur));
-	mask:
+	mask-image:
 		linear-gradient(to right,
 			#000 0,
 			#000 var(--edge),
-			transparent var(--fade),
-			transparent calc(100% - var(--fade)),
+			rgba(0, 0, 0, 0) var(--fade),
+			rgba(0, 0, 0, 0) calc(100% - var(--fade)),
 			#000 calc(100% - var(--edge)),
 			#000 100%),
 		linear-gradient(to bottom,
 			#000 0,
 			#000 var(--edge),
-			transparent var(--fade),
-			transparent calc(100% - var(--fade)),
+			rgba(0, 0, 0, 0) var(--fade),
+			rgba(0, 0, 0, 0) calc(100% - var(--fade)),
 			#000 calc(100% - var(--edge)),
 			#000 100%);
-	transition: 0.8s ease;
+	/* 显式固定 mask 的绘制范围，避免 Android WebView 按默认 repeat 扩展渐变 */
+	mask-position: 0 0, 0 0;
+	mask-size: 100% 100%, 100% 100%;
+	mask-repeat: no-repeat, no-repeat;
+	mask-origin: border-box;
+	mask-clip: border-box;
+	mask-mode: alpha;
+	mask-composite: add;
+	/* iOS/WKWebView 仍主要使用 -webkit-mask */
+	-webkit-mask-image:
+		linear-gradient(to right,
+			#000 0,
+			#000 3px,
+			rgba(0, 0, 0, 0) 14px,
+			rgba(0, 0, 0, 0) calc(100% - 14px),
+			#000 calc(100% - 3px),
+			#000 100%),
+		linear-gradient(to bottom,
+			#000 0,
+			#000 3px,
+			rgba(0, 0, 0, 0) 14px,
+			rgba(0, 0, 0, 0) calc(100% - 14px),
+			#000 calc(100% - 3px),
+			#000 100%);
+	/* Huawei WebView 114 对简写的默认位置、尺寸和重复方式处理不一致 */
+	-webkit-mask-position: 0 0, 0 0;
+	-webkit-mask-size: 100% 100%, 100% 100%;
+	-webkit-mask-repeat: no-repeat, no-repeat;
+	-webkit-mask-origin: border-box;
+	-webkit-mask-clip: border-box;
+	-webkit-mask-mode: alpha;
+	-webkit-mask-composite: source-over;
+	/* 只过渡模糊效果，避免 transition: all 触发整层重绘 */
+	transition: -webkit-backdrop-filter 0.8s ease, backdrop-filter 0.8s ease;
 }
 
 /*
@@ -139,8 +181,14 @@
 .bblock-wrapper::before {
 	content: '';
 	position: absolute;
+	/* inset 的回退写法，兼容较旧的 WebView */
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
 	inset: 0;
 	pointer-events: none;
+	-webkit-user-select: none;
 	user-select: none;
 
 	z-index: 3;
@@ -159,7 +207,7 @@
 	--close: clamp(0, calc((var(--progress) - 96) / 4), 1);
 	/* 接近 100 时 fade 逐渐消失，闭合 */
 	--fade: calc(var(--base-fade) * (1 - var(--close)));
-	--progress-color: #b0cbff61;
+	--progress-color: rgba(176, 203, 255, 0.38);
 
 	background:
 		conic-gradient(from -45deg,
@@ -174,6 +222,11 @@
 		linear-gradient(#000 0 0);
 
 	mask-composite: exclude;
+	/* -webkit-mask-composite 使用 xor 表达同样的“挖空”效果 */
+	-webkit-mask:
+		linear-gradient(#000 0 0) content-box,
+		linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
 
 	padding: var(--progress-width);
 	mix-blend-mode: difference;
@@ -205,6 +258,11 @@
 			#000 5px,
 			#000 calc(100% - 5px),
 			transparent 100%);
+	-webkit-mask-image: linear-gradient(to right,
+			transparent 0,
+			#000 5px,
+			#000 calc(100% - 5px),
+			transparent 100%);
 }
 
 .bblock-wrapper .title-wrapper .title {
@@ -230,6 +288,11 @@
 
 .bblock-wrapper .artist-scroll {
 	mask-image: linear-gradient(to right,
+			transparent 0,
+			#000 7px,
+			#000 calc(100% - 7px),
+			transparent 100%);
+	-webkit-mask-image: linear-gradient(to right,
 			transparent 0,
 			#000 7px,
 			#000 calc(100% - 7px),
@@ -303,8 +366,9 @@
 .bblock-wrapper .controls {
 	z-index: 4;
 	opacity: 0;
+	-webkit-backdrop-filter: blur(5px);
 	backdrop-filter: blur(5px);
-	background-color: rgb(0 0 0 / 20%);
+	background-color: rgba(0, 0, 0, 0.2);
 	pointer-events: none;
 	transition: opacity 0.5s ease;
 }
@@ -466,7 +530,9 @@
 
 /* 首次加载状态 */
 .state-first-loading .loading {
+	background: rgba(255, 255, 255, 0.1);
 	background: rgb(255 255 255 / 10%);
+	-webkit-backdrop-filter: blur(5px);
 	backdrop-filter: blur(5px);
 	pointer-events: auto;
 	user-select: auto;
