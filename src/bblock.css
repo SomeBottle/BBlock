@@ -257,16 +257,22 @@
 			transparent var(--end),
 			transparent 360deg);
 
-	mask:
-		linear-gradient(#000 0 0) content-box,
-		linear-gradient(#000 0 0);
-
-	mask-composite: exclude;
 	/* -webkit-mask-composite 使用 xor 表达同样的“挖空”效果 */
 	-webkit-mask:
 		linear-gradient(#000 0 0) content-box,
 		linear-gradient(#000 0 0);
 	-webkit-mask-composite: xor;
+
+	/* 标准的 mask 写法放在 -webkit- 写法后以兼容 firefox 
+		firefox 中 mask 是简写属性，就像设置 border 会覆盖 border-width 等属性一样，设置 mask 会重置 mask-composite 等属性
+		而 -webkit-mask-composite: xor 是非标准属性，firefox 不认识，所以不会覆盖 mask-composite: exclude
+
+		因此如果 mask 写法放在 -webkit-mask 写法前面，firefox 会把 mask-composite 重置，导致挖空效果失效
+	*/
+	mask:
+		linear-gradient(#000 0 0) content-box,
+		linear-gradient(#000 0 0);
+	mask-composite: exclude;
 
 	padding: var(--progress-width);
 	mix-blend-mode: difference;
