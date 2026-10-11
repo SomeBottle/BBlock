@@ -43,6 +43,7 @@ async function build() {
             define([], factory);
         } else {
             root.bblock = factory();
+            root.BBlockPlayer = root.bblock.BBlockPlayer;
         }
     })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
         ${source}
