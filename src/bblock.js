@@ -3,11 +3,34 @@
 class BBlockPlayer {
 	static CONTROLS_SHOW_DELAY = 1000; // 控制面板显示延迟时间，单位为毫秒
 	static CONTROLS_RETURN_DELAY = 2500; // 控制面板自动隐藏延迟时间，单位为毫秒
+	/**
+	 * 多语言映射表
+	 */
+	static I18N_MAP = {
+		"zh-CN": {
+			"audio_first_play": "在此点击/悬停可开启拖拽面板",
+			"audio_reload_error": "音频载入失败 :(",
+			"audio_play_error": "播放失败 :("
+		},
+		"zh-TW": {
+			"audio_first_play": "在此點擊/懸停可開啟拖曳面板",
+			"audio_reload_error": "音訊載入失敗 :(",
+			"audio_play_error": "播放失敗 :("
+		},
+		"en-US": {
+			"audio_first_play": "Click/hover here to open the drag panel",
+			"audio_reload_error": "Audio failed to load :(",
+			"audio_play_error": "Failed to play :("
+		}
+	};
 
 	constructor(element, config) {
 		if (element instanceof Element) {
-			this.e = element;
-			this.config = config;
+			this._e = element;
+			// 记录原始的 innerHTML 和内联样式，以便在销毁时恢复
+			this._previousHtml = element.innerHTML;
+			this._previousStyle = element.getAttribute('style') || '';
+			this._config = config;
 		} else {
 			throw new Error('BBlockPlayer: The first argument must be an Element.');
 		}
@@ -123,13 +146,22 @@ class BBlockPlayer {
 	}
 
 	/**
+	 * 获得当前语言下的文本
+	 * @param {string} key 键
+	 */
+	_text(key) {
+		// 默认 zh-CN
+		return BBlockPlayer.I18N_MAP[this._config.language || 'zh-CN'][key] || '';
+	}
+
+	/**
 	 * 初始化播放器
 	 */
 	_init() {
 		// 检查 CSS 是否已应用
 		this._checkCSS();
-		this.e.innerHTML = `{{HTML}}`;
-		this.wrapperEl = this.e.querySelector('.bblock-wrapper');
+		this._e.innerHTML = `{{HTML}}`;
+		this.wrapperEl = this._e.querySelector('.bblock-wrapper');
 		this.coverEl = this.wrapperEl.querySelector('.cover');
 		this.titleEl = this.wrapperEl.querySelector('.title');
 		this.artistWrapperEl = this.wrapperEl.querySelector('.artist-wrapper');
@@ -146,7 +178,7 @@ class BBlockPlayer {
 		this.controlsEl = this.wrapperEl.querySelector('.controls');
 		this.controlBarEl = this.wrapperEl.querySelector('.controls>.bar');
 		this.tipEl = this.wrapperEl.querySelector('.tip');
-		BBlockPlayer.style(this.e, { position: 'relative', display: 'inline-block', 'float': this.config.float || 'none' });
+		BBlockPlayer.style(this._e, { position: 'relative', display: 'inline-block', 'float': this._config.float || 'none' });
 
 		// 状态标记
 		this.audioError = false; // 音频是否出错
@@ -170,13 +202,13 @@ class BBlockPlayer {
 		this.wrapperEl.classList.add('state-first-loading');
 
 		// 设置音频源 (src 肯定是有的)
-		this.audioEl.src = this.config.src;
+		this.audioEl.src = this._config.src;
 
 		// 设置标题和艺术家信息
-		this.titleEl.textContent = this.config.title || '';
-		this.artistEl.textContent = this.config.artist || '';
+		this.titleEl.textContent = this._config.title || '';
+		this.artistEl.textContent = this._config.artist || '';
 
-		if (this.config.cover) {
+		if (this._config.cover) {
 			// 同步设置主背景和中央清晰背景副本的封面图片
 			// 这样是为了以较高兼容性实现边缘模糊效果
 			BBlockPlayer.style(
@@ -185,7 +217,7 @@ class BBlockPlayer {
 					this.edgeSharpCustomBgEl
 				],
 				{
-					'background-image': `url(${this.config.cover})`
+					'background-image': `url(${this._config.cover})`
 				}
 			);
 		}
@@ -205,45 +237,47 @@ class BBlockPlayer {
 			// .moveTrans 只会在鼠标移动到上面时才会左右滑动
 			this.artistEl.classList.add('moveTrans');
 		}
+		this._eventAbortController = new AbortController();
+		const { signal } = this._eventAbortController;
 		// 注册鼠标事件
-		this.playEl.addEventListener('click', this.play.bind(this));
-		this.pauseEl.addEventListener('click', this.pause.bind(this));
-		this.reloadEl.addEventListener('click', this._reloadClickHandler.bind(this));
+		this.playEl.addEventListener('click', this.play.bind(this), { signal });
+		this.pauseEl.addEventListener('click', this.pause.bind(this), { signal });
+		this.reloadEl.addEventListener('click', this._reloadClickHandler.bind(this), { signal });
 		// 注册音频事件
-		this.audioEl.addEventListener('canplay', this._audioCanplayHandler.bind(this));
-		this.audioEl.addEventListener('waiting', this._audioWaitHandler.bind(this));
-		this.audioEl.addEventListener('play', this._audioPlayHandler.bind(this));
-		this.audioEl.addEventListener('pause', this._audioPauseHandler.bind(this));
-		this.audioEl.addEventListener('ended', this.pause.bind(this));
-		this.audioEl.addEventListener('error', this._audioErrorHandler.bind(this));
-		this.audioEl.addEventListener('timeupdate', BBlockPlayer.throttle(this._timeUpdateHandler.bind(this), 100));
+		this.audioEl.addEventListener('canplay', this._audioCanplayHandler.bind(this), { signal });
+		this.audioEl.addEventListener('waiting', this._audioWaitHandler.bind(this), { signal });
+		this.audioEl.addEventListener('play', this._audioPlayHandler.bind(this), { signal });
+		this.audioEl.addEventListener('pause', this._audioPauseHandler.bind(this), { signal });
+		this.audioEl.addEventListener('ended', this.pause.bind(this), { signal });
+		this.audioEl.addEventListener('error', this._audioErrorHandler.bind(this), { signal });
+		this.audioEl.addEventListener('timeupdate', BBlockPlayer.throttle(this._timeUpdateHandler.bind(this), 100), { signal });
 		// 注册控制层展开相关的鼠标事件
-		this.bgLayerEl.addEventListener('click', this._bgMouseClickHandler.bind(this));
+		this.bgLayerEl.addEventListener('click', this._bgMouseClickHandler.bind(this), { signal });
 		if ("PointerEvent" in window) {
-			this.pauseEl.addEventListener('pointerenter', this._pauseMouseEnterHandler.bind(this));
-			this.bgLayerEl.addEventListener('pointerenter', this._bgMouseEnterHandler.bind(this));
-			this.wrapperEl.addEventListener('pointerleave', this._wrapperMouseLeaveHandler.bind(this));
+			this.pauseEl.addEventListener('pointerenter', this._pauseMouseEnterHandler.bind(this), { signal });
+			this.bgLayerEl.addEventListener('pointerenter', this._bgMouseEnterHandler.bind(this), { signal });
+			this.wrapperEl.addEventListener('pointerleave', this._wrapperMouseLeaveHandler.bind(this), { signal });
 		} else {
-			this.pauseEl.addEventListener('mouseenter', this._pauseMouseEnterHandler.bind(this));
-			this.bgLayerEl.addEventListener('mouseenter', this._bgMouseEnterHandler.bind(this));
-			this.wrapperEl.addEventListener('mouseleave', this._wrapperMouseLeaveHandler.bind(this));
+			this.pauseEl.addEventListener('mouseenter', this._pauseMouseEnterHandler.bind(this), { signal });
+			this.bgLayerEl.addEventListener('mouseenter', this._bgMouseEnterHandler.bind(this), { signal });
+			this.wrapperEl.addEventListener('mouseleave', this._wrapperMouseLeaveHandler.bind(this), { signal });
 		}
 		// 注册控制相关事件
 		if ("TouchEvent" in window) {
-			this.volumeIconEl.addEventListener('touchstart', this._volumeIconMouseDownHandler.bind(this));
-			this.progressIconEl.addEventListener('touchstart', this._progressIconMouseDownHandler.bind(this));
-			this.controlsEl.addEventListener('touchstart', this._controlsMouseDownHandler.bind(this));
-			window.addEventListener('touchmove', BBlockPlayer.throttle(this._windowMouseMoveHandler.bind(this), 100));
-			window.addEventListener('touchend', this._windowMouseUpHandler.bind(this));
+			this.volumeIconEl.addEventListener('touchstart', this._volumeIconMouseDownHandler.bind(this), { signal });
+			this.progressIconEl.addEventListener('touchstart', this._progressIconMouseDownHandler.bind(this), { signal });
+			this.controlsEl.addEventListener('touchstart', this._controlsMouseDownHandler.bind(this), { signal });
+			window.addEventListener('touchmove', BBlockPlayer.throttle(this._windowMouseMoveHandler.bind(this), 100), { signal });
+			window.addEventListener('touchend', this._windowMouseUpHandler.bind(this), { signal });
 		}
-		this.volumeIconEl.addEventListener('mousedown', this._volumeIconMouseDownHandler.bind(this));
-		this.volumeIconEl.addEventListener('dragstart', this._dragStartHandler.bind(this));
-		this.progressIconEl.addEventListener('mousedown', this._progressIconMouseDownHandler.bind(this));
-		this.progressIconEl.addEventListener('dragstart', this._dragStartHandler.bind(this));
-		this.controlsEl.addEventListener('mousedown', this._controlsMouseDownHandler.bind(this));
-		this.controlsEl.addEventListener('dragstart', this._dragStartHandler.bind(this));
-		window.addEventListener('mousemove', BBlockPlayer.throttle(this._windowMouseMoveHandler.bind(this), 100));
-		window.addEventListener('mouseup', this._windowMouseUpHandler.bind(this));
+		this.volumeIconEl.addEventListener('mousedown', this._volumeIconMouseDownHandler.bind(this), { signal });
+		this.volumeIconEl.addEventListener('dragstart', this._dragStartHandler.bind(this), { signal });
+		this.progressIconEl.addEventListener('mousedown', this._progressIconMouseDownHandler.bind(this), { signal });
+		this.progressIconEl.addEventListener('dragstart', this._dragStartHandler.bind(this), { signal });
+		this.controlsEl.addEventListener('mousedown', this._controlsMouseDownHandler.bind(this), { signal });
+		this.controlsEl.addEventListener('dragstart', this._dragStartHandler.bind(this), { signal });
+		window.addEventListener('mousemove', BBlockPlayer.throttle(this._windowMouseMoveHandler.bind(this), 100), { signal });
+		window.addEventListener('mouseup', this._windowMouseUpHandler.bind(this), { signal });
 	}
 
 	/**
@@ -265,7 +299,7 @@ class BBlockPlayer {
 		if (this.firstPlay) {
 			this.firstPlay = false;
 			// 首次播放时展示提示
-			this._tip('在此点击/悬停可进入拖拽面板', 1500);
+			this._tip(this._text('audio_first_play'), 1500);
 		}
 		// 如果音频状态还在载入中，展示加载状态
 		if (this.audioEl.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
@@ -302,7 +336,8 @@ class BBlockPlayer {
 		this.audioError = true;
 		if (this.audioReloading) {
 			// 如果是重载时失败也提示一下
-			this._tip("音频载入失败 :(");
+			this._tip(this._text('audio_reload_error'));
+			this.audioReloading = false; // 重置重载状态
 		}
 		this.wrapperEl.classList.add('state-error');
 		this.wrapperEl.classList.remove('state-loading');
@@ -603,7 +638,7 @@ class BBlockPlayer {
 			// 同上，transitionToken 发生变化则取消播放
 			if (transitionToken !== this.playbackTransitionToken) return;
 			console.error('Audio play failed:', err);
-			this._tip('播放失败 :(');
+			this._tip(this._text('audio_play_error'));
 			// 播放失败，通常不会有这种情况，因此直接标记为 error
 			this._setAudioErrorState();
 		});
@@ -624,6 +659,25 @@ class BBlockPlayer {
 			this._hideControls();
 		});
 		this.audioEl.pause();
+	}
+
+	/**
+	 * 销毁播放器，恢复原始 HTML
+	 */
+	destroy() {
+		this._eventAbortController.abort();
+		this._e.innerHTML = this._previousHtml;
+		this._e.setAttribute('style', this._previousStyle);
+	}
+
+	/**
+	 * 重新加载播放器，支持配置更新
+	 * @param {Object} deltaConfig 更新的配置 kv
+	 */
+	reload(deltaConfig = {}) {
+		this.destroy();
+		this._config = { ...this._config, ...deltaConfig };
+		this._init();
 	}
 
 	/**
