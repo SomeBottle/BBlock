@@ -2,7 +2,7 @@
 
 class BBlockPlayer {
 	static CONTROLS_SHOW_DELAY = 1000; // 控制面板显示延迟时间，单位为毫秒
-	static CONTROLS_RETURN_DELAY = 3000; // 控制面板自动隐藏延迟时间，单位为毫秒
+	static CONTROLS_RETURN_DELAY = 2500; // 控制面板自动隐藏延迟时间，单位为毫秒
 
 	constructor(element, config) {
 		if (element instanceof Element) {
@@ -574,7 +574,7 @@ class BBlockPlayer {
 	/**
 	 * 设置控制面板自动回撤的计时器
 	 * 这个方法会清除之前的计时器，重新设置一个新的计时器
-	 * 计时器时间为 3 秒
+	 * 计时器时间为 CONTROLS_RETURN_DELAY/1000 秒
 	 * @returns
 	 */
 	_setControlsReturnTimer() {
@@ -661,6 +661,8 @@ class BBlockPlayer {
 		} else {
 			// 如果不在调节状态，就隐藏控制面板
 			this._hideControls();
+			// 这个时候鼠标还在播放内，控制面板隐藏后会再次触发 mouseenter，因此这里要阻止这次触发
+			this.dontShowControls = true;
 		}
 	}
 
