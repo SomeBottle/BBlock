@@ -33,15 +33,40 @@ async function build() {
         css: escapeTemplateLiteral(minifiedCSS.styles),
         html: escapeTemplateLiteral(minifiedHTML)
     };
-    // 将 CSS 和 HTML 插入到 JS 中 （分别替换 {{CSS}} 和 {{HTML}}，大小写不敏感） ，并进行 JS 精简
+    // 将 CSS 和 HTML 插入到 JS 中 （分别替换 {{CSS}} 和 {{HTML}}，大小写不敏感）
     const source = js.replace(/\{\{(CSS|HTML)\}\}/gi, (_, name) => assets[name.toLowerCase()]);
-    const result = await minifyJS(source);
+    // 使用 UMD 包装，支持 CommonJS、AMD 和浏览器全局变量
+    const umdSource = `(function (root, factory) {
+        if (typeof module === 'object' && module.exports) {
+            module.exports = factory();
+        } else if (typeof define === 'function' && define.amd) {
+            define([], factory);
+        } else {
+            root.bblock = factory();
+        }
+    })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+        ${source}
+        // 保留 bblock API，同时支持 CommonJS 解构获取 BBlockPlayer
+        bblock.BBlockPlayer = BBlockPlayer;
+        return bblock;
+    });`;
+    // 使用 ESM 默认导出 bblock，并具名导出 BBlockPlayer，供 Vite 等工具通过 import 加载
+    const esmSource = `${source}\nexport default bblock;\nexport { BBlockPlayer };`;
+    const [umdResult, esmResult] = await Promise.all([
+        minifyJS(umdSource),
+        minifyJS(esmSource, { module: true })
+    ]);
 
-    // 将精简后的 JS 写入 dist/bblock.prod.js
+    // 将精简后的 UMD 和 ESM 产物写入 dist
     const outputDir = path.join(root, 'dist');
     await mkdir(outputDir, { recursive: true });
-    await writeFile(path.join(outputDir, 'bblock.prod.js'), result.code + '\n', 'utf8');
-    console.log(`Built dist/bblock.prod.js (${Buffer.byteLength(result.code)} bytes)`);
+    for (const [filename, result] of [
+        ['bblock.umd.js', umdResult],
+        ['bblock.esm.js', esmResult]
+    ]) {
+        await writeFile(path.join(outputDir, filename), result.code + '\n', 'utf8');
+        console.log(`Built dist/${filename} (${Buffer.byteLength(result.code)} bytes)`);
+    }
 }
 
 build().catch((error) => {

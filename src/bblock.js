@@ -788,7 +788,7 @@ class BBlockPlayer {
 	}
 };
 
-var bblock = {
+const bblock = {
 	/**
 	 * 存放页面中现存的 BBlockPlayer 实例，key 为播放器的唯一 ID，value 为 BBlockPlayer 实例
 	 * @type {Object.<string, BBlockPlayer>}
@@ -855,4 +855,10 @@ var bblock = {
 	}
 };
 
-bblock.s();
+if(typeof window !== 'undefined') {
+	window.bblock = bblock;
+}
+
+if(typeof document !== 'undefined') {
+	bblock.s();
+}
