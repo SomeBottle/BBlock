@@ -1,6 +1,7 @@
 /* BBlock 2.0 Wow~you can really play! - SomeBottle*/
 
 class BBlockPlayer {
+	static bblockId = 0; // 用于生成唯一的播放器 ID
 	static CONTROLS_SHOW_DELAY = 1000; // 控制面板显示延迟时间，单位为毫秒
 	static CONTROLS_RETURN_DELAY = 2500; // 控制面板自动隐藏延迟时间，单位为毫秒
 	/**
@@ -26,6 +27,7 @@ class BBlockPlayer {
 
 	constructor(element, config) {
 		if (element instanceof Element) {
+			this._id = BBlockPlayer.bblockId++;
 			this._e = element;
 			// 记录原始的 innerHTML 和内联样式，以便在销毁时恢复
 			this._previousHtml = element.innerHTML;
@@ -190,6 +192,7 @@ class BBlockPlayer {
 		this._barDragging = false; // 是否正在拖拽控制条
 		this._previousMousePos = { x: 0, y: 0 }; // 上一次鼠标位置，用于计算拖拽距离
 		this._playbackTransitionToken = 0; // 播放状态过渡的标记，用于防止频繁操作导致的状态错乱
+		this._destroyed = false; // 播放器是否已被销毁
 
 		// 计时器
 		this._controlsShowTimer = null; // 控制面板显示计时器
@@ -278,6 +281,16 @@ class BBlockPlayer {
 		this._controlsEl.addEventListener('dragstart', this._dragStartHandler.bind(this), { signal });
 		window.addEventListener('mousemove', BBlockPlayer.throttle(this._windowMouseMoveHandler.bind(this), 100), { signal });
 		window.addEventListener('mouseup', this._windowMouseUpHandler.bind(this), { signal });
+		// 注册到全局播放器列表中
+		bblock._currentPlayers[this.id] = this;
+		// 启动 Observer 监听播放器元素是否被移除
+		this._elObserver = new MutationObserver(() => {
+			if (!this._wrapperEl.isConnected) {
+				// 如果播放器元素不在文档中，就销毁播放器
+				this.destroy();
+			}
+		});
+		this._elObserver.observe(document.body, { childList: true, subtree: true });
 	}
 
 	/**
@@ -668,6 +681,18 @@ class BBlockPlayer {
 		this._eventAbortController.abort();
 		this._e.innerHTML = this._previousHtml;
 		this._e.setAttribute('style', this._previousStyle);
+		this._destroyed = true;
+		// 停止 observer
+		this._elObserver.disconnect();
+		delete bblock._currentPlayers[this.id];
+	}
+
+	/**
+	 * 播放器是否已被销毁
+	 * @returns {boolean} 播放器是否已被销毁
+	 */
+	get destroyed() {
+		return this._destroyed;
 	}
 
 	/**
@@ -678,6 +703,14 @@ class BBlockPlayer {
 		this.destroy();
 		this._config = { ...this._config, ...deltaConfig };
 		this._init();
+	}
+
+	/**
+	 * 获得播放器的唯一 ID
+	 * @returns {string} 播放器的唯一 ID
+	 */
+	get id() {
+		return this._id.toString();
 	}
 
 	/**
@@ -755,6 +788,40 @@ class BBlockPlayer {
 };
 
 var bblock = {
+	/**
+	 * 存放页面中现存的 BBlockPlayer 实例，key 为播放器的唯一 ID，value 为 BBlockPlayer 实例
+	 * @type {Object.<string, BBlockPlayer>}
+	 */
+	_currentPlayers: {},
+	/**
+	 * 移除已经被销毁的播放器实例
+	 */
+	_cleanDestroyedPlayers: function () {
+		for (const id in this._currentPlayers) {
+			if (this._currentPlayers[id].destroyed) {
+				delete this._currentPlayers[id];
+			}
+		}
+	},
+	/**
+	 * 获取当前页面中所有的 BBlockPlayer 实例
+	 * @returns {Array.<[string, BBlockPlayer]>} BBlockPlayer 实例数组
+	 */
+	get currentPlayers() {
+		// 过滤掉已经被销毁的
+		this._cleanDestroyedPlayers();
+		return Object.entries(this._currentPlayers);
+	},
+	/**
+	 * 根据 ID 获取当前页面中指定的 BBlockPlayer 实例
+	 * @param {string} id 播放器的唯一 ID
+	 * @returns {BBlockPlayer|null} BBlockPlayer 实例，如果不存在则返回 null
+	 */
+	get(id) {
+		// 一样过滤掉已经被销毁的
+		this._cleanDestroyedPlayers();
+		return this._currentPlayers[id] || null;
+	},
 	/**
 	 * 扫描页面中的 <bblock> 标签以构造播放器
 	 * 这个方法是为了兼容 v1.x 版本的 bblock
