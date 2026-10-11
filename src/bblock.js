@@ -104,7 +104,7 @@ class BBlockPlayer {
 
 	/**
 	 * 把一条提示信息的展示加入到队列中
-	 * 
+	 *
 	 * @param {string} message 提示信息
 	 * @param {number} duration 提示信息显示的时间，单位为毫秒，默认 1000 毫秒
 	 */
@@ -139,6 +139,7 @@ class BBlockPlayer {
 		this.reloadEl = this.wrapperEl.querySelector('.reload');
 		this.audioEl = this.wrapperEl.querySelector('audio');
 		this.customBgEl = this.wrapperEl.querySelector('.custom-bg');
+		this.edgeSharpCustomBgEl = this.wrapperEl.querySelector('.edge-sharp-custom-bg');
 		this.bgLayerEl = this.wrapperEl.querySelector('.bg-layer');
 		this.volumeIconEl = this.wrapperEl.querySelector('.volume-icon');
 		this.progressIconEl = this.wrapperEl.querySelector('.progress-icon');
@@ -175,9 +176,18 @@ class BBlockPlayer {
 		this.titleEl.textContent = this.config.title || '';
 		this.artistEl.textContent = this.config.artist || '';
 
-		// 设置封面图片
 		if (this.config.cover) {
-			BBlockPlayer.style(this.customBgEl, { 'background-image': `url(${this.config.cover})` });
+			// 同步设置主背景和中央清晰背景副本的封面图片
+			// 这样是为了以较高兼容性实现边缘模糊效果
+			BBlockPlayer.style(
+				[
+					this.customBgEl,
+					this.edgeSharpCustomBgEl
+				],
+				{
+					'background-image': `url(${this.config.cover})`
+				}
+			);
 		}
 
 		// 计算溢出宽度
@@ -248,7 +258,7 @@ class BBlockPlayer {
 	/**
 	 * 音频播放时的处理函数
 	 * @param {Event} e 事件
-	 * @returns 
+	 * @returns
 	 */
 	_audioPlayHandler(e) {
 		if (e.target !== this.audioEl) return;
@@ -297,6 +307,7 @@ class BBlockPlayer {
 		this.wrapperEl.classList.add('state-error');
 		this.wrapperEl.classList.remove('state-loading');
 		this.wrapperEl.classList.remove('state-first-loading');
+		this.wrapperEl.classList.remove('edge-blur-active');
 		this._hideControls();
 	}
 
@@ -437,7 +448,7 @@ class BBlockPlayer {
 
 	/**
 	 * 鼠标在控制层上按下时的处理函数
-	 * 只要用户鼠标还在控制层，就算鼠标松开了也可以重新开始拖拽
+	 * 按下后只要用户鼠标还在控制层，就算鼠标松开了也可以重新开始拖拽
 	 * @param {Event} e 事件
 	 * @returns
 	 */
@@ -550,7 +561,7 @@ class BBlockPlayer {
 		this.barDragging = false;
 		// 如果鼠标在控制面板内松开，就不结束调节状态，用户可能还想继续调节
 		if (this._isEventInsideWrapper(e)) {
-			// 设立一个定时器，一段时间没动作就自动隐藏控制面板
+			// 设立一个定时器，一段时间没动作就自动隐藏面板
 			this._setControlsReturnTimer();
 			return;
 		}
@@ -581,6 +592,7 @@ class BBlockPlayer {
 	 */
 	play() {
 		const transitionToken = ++this.playbackTransitionToken;
+		this.wrapperEl.classList.add('edge-blur-active');
 		this.wrapperEl.classList.add('state-playing');
 		BBlockPlayer.waitTransitionEnd(this.playEl, 'opacity').then(() => {
 			// transitionToken 发生变化说明这个过程中发生了别的过渡（通常是快速点到了暂停按钮），这个过渡被取消了
@@ -606,6 +618,7 @@ class BBlockPlayer {
 		BBlockPlayer.style(this.pauseEl, { opacity: '0', pointerEvents: 'none' });
 		BBlockPlayer.waitTransitionEnd(this.pauseEl, 'opacity').then(() => {
 			if (transitionToken !== this.playbackTransitionToken) return;
+			this.wrapperEl.classList.remove('edge-blur-active');
 			this.wrapperEl.classList.remove('state-playing');
 			// 暂停时也隐藏控制面板
 			this._hideControls();
@@ -636,7 +649,7 @@ class BBlockPlayer {
 
 	/**
 	 * 回撤到控制面板的上一个状态。目前有调节状态和非调节状态两种状态，位于非调节状态再回撤时，则会关闭面板。
-	 * 
+	 *
 	 * 这个主要是搭配 ControlsReturnTimer 使用的，计时器到时间后会调用这个方法来回撤控制面板的状态。
 	 */
 	_returnControls() {
@@ -709,7 +722,7 @@ var bblock = {
 	},
 	/**
 	 * 创建一个 BBlockPlayer 实例
-	 * @param {HTMLElement} e HTML 元素，播放器将被创建在该元素中 
+	 * @param {HTMLElement} e HTML 元素，播放器将被创建在该元素中
 	 * @param {Object} config 播放器配置对象
 	 * @returns {BBlockPlayer} BBlockPlayer 实例
 	 */

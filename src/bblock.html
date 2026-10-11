@@ -7,7 +7,18 @@
             </g>
         </svg>
     </div>
-    <div class="edge-blur"><!--边缘模糊效果层--></div>
+    <div class="edge-blur">
+        <!--边缘模糊效果层
+            这里实际上是叠了一层背景（歌曲封面），然后通过 edge-sharp-x, edge-sharp-y 这两层（左右边缘、上下边缘）遮罩来实现边缘渐隐，配合 backdrop-filter: blur() 来实现边缘模糊效果
+            这样写是为了提高兼容性，比如兼容 WebView 114 版本
+        -->
+        <div class="edge-sharp-x">
+            <div class="edge-sharp-y">
+                <div class="edge-sharp-custom-bg"></div>
+                <div class="edge-sharp-default-bg"></div>
+            </div>
+        </div>
+    </div>
     <div class="reload">
         <!--重新加载按钮-->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
