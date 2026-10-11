@@ -914,9 +914,11 @@ class BBlockPlayer {
 
 	/**
 	 * 隐藏控制面板
+	 * 
+	 * 注意：本方法在多处被调用，很多时候不是关闭面板，而是抑制面板出现。
+	 * 比如在暂停后的页面就靠这个方法抑制控制面板的显示。
 	 */
 	_hideControls() {
-		if (!this._wrapperEl.classList.contains('controls-show')) return;
 		if (this._controlsShowTimer !== null) {
 			clearTimeout(this._controlsShowTimer);
 			this._controlsShowTimer = null;
@@ -925,12 +927,14 @@ class BBlockPlayer {
 			clearTimeout(this._controlsReturnTimer);
 			this._controlsReturnTimer = null;
 		}
-		this._wrapperEl.classList.remove('controls-show');
+		// 激发事件（仅在控制面板被实际隐藏时激发）
+		if (this._wrapperEl.classList.contains('controls-show')) {
+			this._emitEvent('controlshide');
+			this._wrapperEl.classList.remove('controls-show');
+		}
 		// 控制状态复位
 		this._stopControlling();
 		this._dontShowControls = false;
-		// 激发事件
-		this._emitEvent('controlshide');
 	}
 };
 
