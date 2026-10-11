@@ -508,11 +508,15 @@ class BBlockPlayer {
 	 */
 	_volumeIconMouseDownHandler(e) {
 		if (!this._volumeIconEl.contains(e.target)) return;
+		// 如果是启动了音量控制就激发事件
+		if (!this._volumeControlling) {
+			this._emitEvent('volumecontrolstart');
+		}
 		this._volumeControlling = true;
 		this._volumeIconEl.classList.add('active-icon');
 		this._progressIconEl.classList.add('hidden-icon');
 		this._controlBarEl.style.width = `${this._audioEl.volume * 100}%`;
-		// 事件会冒泡到 controls 层，由 controls 层统一开始拖拽并触发 start 事件
+		// 事件会冒泡到 controls 层，由 controls 层统一开始拖拽
 	}
 
 	/**
@@ -525,11 +529,15 @@ class BBlockPlayer {
 		if (!this._progressIconEl.contains(e.target)) return;
 		const progress = this._getProgressPercent();
 		if (progress === null) return;
+		// 如果是启动了进度控制就激发事件
+		if (!this._progressControlling) {
+			this._emitEvent('progresscontrolstart');
+		}
 		this._progressControlling = true;
 		this._progressIconEl.classList.add('active-icon');
 		this._volumeIconEl.classList.add('hidden-icon');
 		this._controlBarEl.style.width = `${progress}%`;
-		// 事件会冒泡到 controls 层，由 controls 层统一开始拖拽并触发 start 事件
+		// 事件会冒泡到 controls 层，由 controls 层统一开始拖拽
 	}
 
 	/**
@@ -547,12 +555,6 @@ class BBlockPlayer {
 		this._previousMousePos = this._getMousePos(e);
 		// 重置面板回撤计时器
 		this._setControlsReturnTimer();
-		// 激发事件
-		if (this._volumeControlling) {
-			this._emitEvent('volumecontrolstart');
-		} else if (this._progressControlling) {
-			this._emitEvent('progresscontrolstart');
-		}
 	}
 
 	/**
@@ -652,12 +654,6 @@ class BBlockPlayer {
 		}
 		// 松开鼠标肯定停止拖拽了
 		this._barDragging = false;
-		// 停止控制了就触发事件
-		if (this._volumeControlling) {
-			this._emitEvent('volumecontrolend');
-		} else if (this._progressControlling) {
-			this._emitEvent('progresscontrolend');
-		}
 		// 如果鼠标在控制面板内松开，就不结束调节状态，用户可能还想继续调节
 		if (this._isEventInsideWrapper(e)) {
 			// 设立一个定时器，一段时间没动作就自动隐藏面板
@@ -901,6 +897,12 @@ class BBlockPlayer {
 	 * 结束所有控制状态，恢复到非调节状态的控制面板
 	 */
 	_stopControlling() {
+		// 根据之前的状态决定激发哪个事件
+		if (this._volumeControlling) {
+			this._emitEvent('volumecontrolend');
+		} else if (this._progressControlling) {
+			this._emitEvent('progresscontrolend');
+		}
 		this._volumeControlling = false;
 		this._progressControlling = false;
 		this._barDragging = false;
