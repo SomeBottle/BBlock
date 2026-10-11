@@ -214,6 +214,18 @@ class BBlockPlayer {
 		// 设置音频源 (src 肯定是有的)
 		this._audioEl.src = this._config.src;
 
+		// 设置循环状态
+		if (this._config.loop === true || this._config.loop === 'true') {
+			this._audioEl.loop = true;
+		}else{
+			this._audioEl.loop = false;
+		}
+
+		// 设置开始播放的时间点
+		if (this._config.time&& Number.isFinite(this._config.time) && this._config.time >= 0) {
+			this._audioEl.currentTime = this._config.time;
+		}
+
 		// 设置标题和艺术家信息
 		this._titleEl.textContent = this._config.title || '';
 		this._artistEl.textContent = this._config.artist || '';
