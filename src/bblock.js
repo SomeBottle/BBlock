@@ -153,7 +153,8 @@ class BBlockPlayer {
 	 */
 	_text(key) {
 		// 默认 zh-CN
-		return BBlockPlayer.I18N_MAP[this._config.language || 'zh-CN'][key] || '';
+		const langMap = BBlockPlayer.I18N_MAP[this._config.language || 'zh-CN'] || BBlockPlayer.I18N_MAP['zh-CN'];
+		return langMap[key] || '';
 	}
 
 	/**
