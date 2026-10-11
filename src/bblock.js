@@ -62,13 +62,29 @@ class BBlockPlayer {
 	/**
 	 * 等待元素的过渡动画结束
 	 * @param {HTMLElement} element 元素
+	 * @param {string} [propertyName=""] 可选的过渡属性名
+	 * @param {number} [duration=500] 可选的兜底过渡持续时间，单位为毫秒
 	 * @returns {Promise} 返回一个 Promise，当过渡动画结束时 resolve
 	 */
-	static waitTransitionEnd(element) {
+	static waitTransitionEnd(element, propertyName = "", duration = 500) {
 		return new Promise((resolve) => {
-			element.addEventListener('transitionend', () => {
+			let settled = false;
+			let fallbackTimer = null;
+			const finish = (e) => {
+				if (e && (e.target !== element || (propertyName && e.propertyName !== propertyName))) return;
+				if (settled) return;
+				settled = true;
+				if (fallbackTimer !== null) {
+					clearTimeout(fallbackTimer);
+				}
+				element.removeEventListener('transitionend', finish);
+				element.removeEventListener('transitioncancel', finish);
 				resolve();
-			});
+			};
+			element.addEventListener('transitionend', finish);
+			element.addEventListener('transitioncancel', finish);
+			// 取决于 CSS 中的过渡时间
+			fallbackTimer = setTimeout(finish, duration);
 		});
 	}
 
@@ -106,6 +122,9 @@ class BBlockPlayer {
 		});
 	}
 
+	/**
+	 * 初始化播放器
+	 */
 	_init() {
 		// 检查 CSS 是否已应用
 		this._checkCSS();
@@ -137,6 +156,7 @@ class BBlockPlayer {
 		this.progressControlling = false; // 是否正在进行进度调节
 		this.barDragging = false; // 是否正在拖拽控制条
 		this.previousMousePos = { x: 0, y: 0 }; // 上一次鼠标位置，用于计算拖拽距离
+		this.playbackTransitionToken = 0; // 播放状态过渡的标记，用于防止频繁操作导致的状态错乱
 
 		// 计时器
 		this.controlsShowTimer = null; // 控制面板显示计时器
@@ -260,7 +280,15 @@ class BBlockPlayer {
 	 * @param {Event} e 事件
 	 */
 	_audioErrorHandler(e) {
-		if (e.target !== this.audioEl) return;
+		if (e && e.target !== this.audioEl) return;
+		this._setAudioErrorState();
+	}
+
+	/**
+	 * 设置状态为音频播放出错
+	 */
+	_setAudioErrorState() {
+		this.playbackTransitionToken++;
 		this.audioError = true;
 		if (this.audioReloading) {
 			// 如果是重载时失败也提示一下
@@ -285,14 +313,31 @@ class BBlockPlayer {
 
 	/**
 	 * 音频播放进度更新时的处理函数
+	 * @param {Event} e 事件
 	 */
 	_timeUpdateHandler(e) {
 		if (e.target !== this.audioEl) return;
-		this.wrapperEl.style.setProperty('--progress', (this.audioEl.currentTime / this.audioEl.duration) * 100);
+		const progress = this._getProgressPercent();
+		if (progress === null) return;
+		this.wrapperEl.style.setProperty('--progress', progress);
+	}
+
+	/**
+	 * 获取当前音频播放进度的百分比
+	 * @returns {number|null} 当前播放进度的百分比，如果无法获取则返回 null
+	 */
+	_getProgressPercent() {
+		const audioDuration = this.audioEl.duration;
+		const currentTime = this.audioEl.currentTime;
+		if (!Number.isFinite(audioDuration) || audioDuration <= 0 || !Number.isFinite(currentTime)) {
+			return null;
+		}
+		return Math.min(Math.max(currentTime / audioDuration * 100, 0), 100);
 	}
 
 	/**
 	 * 点击重新加载按钮时的处理函数
+	 * @param {Event} e 事件
 	 */
 	_reloadClickHandler(e) {
 		if (!this.reloadEl.contains(e.target)) return;
@@ -306,6 +351,7 @@ class BBlockPlayer {
 
 	/**
 	 * 鼠标移入背景时的处理函数
+	 * @param {Event} e 事件
 	 */
 	_bgMouseEnterHandler(e) {
 		if (!this.bgLayerEl.contains(e.target)) return;
@@ -315,6 +361,7 @@ class BBlockPlayer {
 	/**
 	 * 鼠标点击背景时的处理函数
 	 * 这个处理函数主要是为了防止用户点击播放按钮后，控制面板立即显示
+	 * @param {Event} e 事件
 	 */
 	_bgMouseClickHandler(e) {
 		if (!this.bgLayerEl.contains(e.target)) return;
@@ -326,6 +373,7 @@ class BBlockPlayer {
 
 	/**
 	 * 鼠标移入暂停按钮时的处理函数
+	 * @param {Event} e 事件
 	 */
 	_pauseMouseEnterHandler(e) {
 		if (!this.pauseEl.contains(e.target)) return;
@@ -335,6 +383,7 @@ class BBlockPlayer {
 
 	/**
 	 * 鼠标移出播放器时的处理函数
+	 * @param {Event} e 事件
 	 */
 	_wrapperMouseLeaveHandler(e) {
 		if (!this.wrapperEl.contains(e.target)) return;
@@ -358,6 +407,7 @@ class BBlockPlayer {
 	/**
 	 * 鼠标在音量图标上按下时的处理函数
 	 * 按下后转换为音量调节控制模式
+	 * @param {Event} e 事件
 	 */
 	_volumeIconMouseDownHandler(e) {
 		if (!this.volumeIconEl.contains(e.target)) return;
@@ -376,10 +426,12 @@ class BBlockPlayer {
 	 */
 	_progressIconMouseDownHandler(e) {
 		if (!this.progressIconEl.contains(e.target)) return;
+		const progress = this._getProgressPercent();
+		if (progress === null) return;
 		this.progressControlling = true;
 		this.progressIconEl.classList.add('active-icon');
 		this.volumeIconEl.classList.add('hidden-icon');
-		this.controlBarEl.style.width = `${(this.audioEl.currentTime / this.audioEl.duration) * 100}%`;
+		this.controlBarEl.style.width = `${progress}%`;
 		this._controlsMouseDownHandler(e);
 	}
 
@@ -406,16 +458,18 @@ class BBlockPlayer {
 	 * @returns
 	 */
 	_windowMouseMoveHandler(e) {
+		const insideWrapper = this._isEventInsideWrapper(e);
 		// 鼠标在面板内移动，重置面板自动隐藏定时器
-		if (this.wrapperEl.contains(e.target) && this.controlsReturnTimer !== null) {
+		if ((insideWrapper || this.barDragging) && this.controlsReturnTimer !== null) {
 			this._setControlsReturnTimer();
 		}
-		let { x: clientX, y: clientY } = this._getMousePos(e);
+		const { x: clientX, y: clientY } = this._getMousePos(e);
+		if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
 		if (!this.barDragging) {
 			// 没有在拖拽时，不处理
 			this.previousMousePos = { x: clientX, y: clientY };
 			// 如果这个时候鼠标移出控制面板，就隐藏面板
-			if (!this.wrapperEl.contains(e.target)) {
+			if (!insideWrapper) {
 				this._hideControls();
 			}
 			return;
@@ -429,10 +483,35 @@ class BBlockPlayer {
 			// 进度调节
 			const audioDuration = this.audioEl.duration;
 			const playerWidth = this.wrapperEl.clientWidth;
-			this.audioEl.currentTime = Math.min(Math.max(this.audioEl.currentTime + (audioDuration / playerWidth * deltaX), 0), this.audioEl.duration - 0.01);
-			this.controlBarEl.style.width = `${(this.audioEl.currentTime / audioDuration) * 100}%`;
+			if (!Number.isFinite(audioDuration) || audioDuration <= 0 || playerWidth <= 0) {
+				this._stopControlling();
+				return;
+			}
+			const currentTime = Number.isFinite(this.audioEl.currentTime) ? this.audioEl.currentTime : 0;
+			const maxTime = audioDuration <= 0.5 ? audioDuration : audioDuration - 0.5;
+			this.audioEl.currentTime = Math.min(Math.max(currentTime + (audioDuration / playerWidth * deltaX), 0), maxTime);
+			const progress = this._getProgressPercent();
+			if (progress !== null) {
+				this.controlBarEl.style.width = `${progress}%`;
+			}
 		}
 		this.previousMousePos = { x: clientX, y: clientY };
+	}
+
+	/**
+	 * 判断事件发生的位置是否在播放器内
+	 * @param {Event} e 鼠标或触摸事件
+	 * @returns {boolean} 事件位置是否在播放器内
+	 */
+	_isEventInsideWrapper(e) {
+		if (e && ("touches" in e || "changedTouches" in e)) {
+			const { x, y } = this._getMousePos(e);
+			if (Number.isFinite(x) && Number.isFinite(y)) {
+				const rect = this.wrapperEl.getBoundingClientRect();
+				return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+			}
+		}
+		return Boolean(e && this.wrapperEl.contains(e.target));
 	}
 
 	/**
@@ -446,18 +525,15 @@ class BBlockPlayer {
 		}
 		let clientX, clientY;
 		if ("touches" in e) {
-			if (e.touches.length > 0) {
-				clientX = e.touches[0].clientX;
-				clientY = e.touches[0].clientY;
-			} else if (e.changedTouches.length > 0) {
-				clientX = e.changedTouches[0].clientX;
-				clientY = e.changedTouches[0].clientY;
-			}
+			const touch = e.touches[0] || e.changedTouches[0];
+			if (!touch) return { x: -1, y: -1 };
+			clientX = touch.clientX;
+			clientY = touch.clientY;
 		} else {
 			clientX = e.clientX;
 			clientY = e.clientY;
 		}
-		return { x: clientX, y: clientY }
+		return { x: clientX, y: clientY };
 	}
 
 	/**
@@ -473,7 +549,7 @@ class BBlockPlayer {
 		// 松开鼠标肯定停止拖拽了
 		this.barDragging = false;
 		// 如果鼠标在控制面板内松开，就不结束调节状态，用户可能还想继续调节
-		if (this.wrapperEl.contains(e.target)) {
+		if (this._isEventInsideWrapper(e)) {
 			// 设立一个定时器，一段时间没动作就自动隐藏控制面板
 			this._setControlsReturnTimer();
 			return;
@@ -504,15 +580,20 @@ class BBlockPlayer {
 	 * 播放音频
 	 */
 	play() {
+		const transitionToken = ++this.playbackTransitionToken;
 		this.wrapperEl.classList.add('state-playing');
-		BBlockPlayer.waitTransitionEnd(this.playEl).then(() => {
+		BBlockPlayer.waitTransitionEnd(this.playEl, 'opacity').then(() => {
+			// transitionToken 发生变化说明这个过程中发生了别的过渡（通常是快速点到了暂停按钮），这个过渡被取消了
+			if (transitionToken !== this.playbackTransitionToken) return;
 			BBlockPlayer.style(this.pauseEl, { opacity: '1', pointerEvents: 'auto' });
 		});
 		this.audioEl.play().catch((err) => {
+			// 同上，transitionToken 发生变化则取消播放
+			if (transitionToken !== this.playbackTransitionToken) return;
 			console.error('Audio play failed:', err);
 			this._tip('播放失败 :(');
 			// 播放失败，通常不会有这种情况，因此直接标记为 error
-			this._audioErrorHandler();
+			this._setAudioErrorState();
 		});
 		this.dontShowControls = true;
 	}
@@ -521,8 +602,10 @@ class BBlockPlayer {
 	 * 暂停音频
 	 */
 	pause() {
+		const transitionToken = ++this.playbackTransitionToken;
 		BBlockPlayer.style(this.pauseEl, { opacity: '0', pointerEvents: 'none' });
-		BBlockPlayer.waitTransitionEnd(this.pauseEl).then(() => {
+		BBlockPlayer.waitTransitionEnd(this.pauseEl, 'opacity').then(() => {
+			if (transitionToken !== this.playbackTransitionToken) return;
 			this.wrapperEl.classList.remove('state-playing');
 			// 暂停时也隐藏控制面板
 			this._hideControls();
@@ -574,6 +657,7 @@ class BBlockPlayer {
 	_stopControlling() {
 		this.volumeControlling = false;
 		this.progressControlling = false;
+		this.barDragging = false;
 		this.volumeIconEl.classList.remove('active-icon');
 		this.progressIconEl.classList.remove('active-icon');
 		this.volumeIconEl.classList.remove('hidden-icon');
@@ -598,7 +682,6 @@ class BBlockPlayer {
 		// 控制状态复位
 		this._stopControlling();
 		this.dontShowControls = false;
-		this.barDragging = false;
 	}
 };
 
