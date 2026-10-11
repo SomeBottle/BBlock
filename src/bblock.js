@@ -137,9 +137,11 @@ class BBlockPlayer {
 		const tipEl = this._tipEl;
 		this._tipQueue = this._tipQueue.then(() => {
 			return new Promise((resolve) => {
+				this._emitEvent('tipshow', message, duration);
 				tipEl.textContent = message;
 				tipEl.style.opacity = '1';
 				setTimeout(() => {
+					this._emitEvent('tiphide', message, duration);
 					tipEl.style.opacity = '0';
 					setTimeout(resolve, 500); // 等待过渡动画结束后再 resolve
 				}, duration);
@@ -182,6 +184,10 @@ class BBlockPlayer {
 		this._controlBarEl = this._wrapperEl.querySelector('.controls>.bar');
 		this._tipEl = this._wrapperEl.querySelector('.tip');
 		BBlockPlayer.style(this._e, { position: 'relative', display: 'inline-block', 'float': this._config.float || 'none' });
+
+		// 通过 .on 注册的播放器监听器
+		this._listeners = new Map();
+		this._customEventAbortController = new AbortController(); // 用于自定义事件的 AbortController
 
 		// 状态标记
 		this._audioError = false; // 音频是否出错
@@ -506,7 +512,7 @@ class BBlockPlayer {
 		this._volumeIconEl.classList.add('active-icon');
 		this._progressIconEl.classList.add('hidden-icon');
 		this._controlBarEl.style.width = `${this._audioEl.volume * 100}%`;
-		this._controlsMouseDownHandler(e);
+		// 事件会冒泡到 controls 层，由 controls 层统一开始拖拽并触发 start 事件
 	}
 
 	/**
@@ -523,7 +529,7 @@ class BBlockPlayer {
 		this._progressIconEl.classList.add('active-icon');
 		this._volumeIconEl.classList.add('hidden-icon');
 		this._controlBarEl.style.width = `${progress}%`;
-		this._controlsMouseDownHandler(e);
+		// 事件会冒泡到 controls 层，由 controls 层统一开始拖拽并触发 start 事件
 	}
 
 	/**
@@ -535,11 +541,18 @@ class BBlockPlayer {
 	_controlsMouseDownHandler(e) {
 		if (!this._wrapperEl.contains(e.target)) return;
 		if (!this._volumeControlling && !this._progressControlling) return;
+		e.stopPropagation();
 		this._barDragging = true;
 		// 开始拖拽时重置一下鼠标位置，避免拖拽时出现跳跃
 		this._previousMousePos = this._getMousePos(e);
 		// 重置面板回撤计时器
 		this._setControlsReturnTimer();
+		// 激发事件
+		if (this._volumeControlling) {
+			this._emitEvent('volumecontrolstart');
+		} else if (this._progressControlling) {
+			this._emitEvent('progresscontrolstart');
+		}
 	}
 
 	/**
@@ -639,6 +652,12 @@ class BBlockPlayer {
 		}
 		// 松开鼠标肯定停止拖拽了
 		this._barDragging = false;
+		// 停止控制了就触发事件
+		if (this._volumeControlling) {
+			this._emitEvent('volumecontrolend');
+		} else if (this._progressControlling) {
+			this._emitEvent('progresscontrolend');
+		}
 		// 如果鼠标在控制面板内松开，就不结束调节状态，用户可能还想继续调节
 		if (this._isEventInsideWrapper(e)) {
 			// 设立一个定时器，一段时间没动作就自动隐藏面板
@@ -688,9 +707,52 @@ class BBlockPlayer {
 	}
 
 	/**
+	 * 设置音量，范围为 0~1
+	 * @param {number} value 音量值，范围为 0~1
+	 */
+	set volume(value) {
+		this._audioEl.volume = Math.min(Math.max(value, 0), 1);
+	}
+
+	/**
+	 * 获取当前音量，范围为 0~1
+	 * @returns {number} 当前音量，范围为 0~1
+	 */
+	get volume() {
+		return this._audioEl.volume;
+	}
+
+	/**
+	 * 设置播放进度
+	 * @param {number} value 播放进度 (秒)
+	 */
+	seek(value) {
+		this._audioEl.currentTime = Math.min(Math.max(value, 0), this._audioEl.duration);
+	}
+
+	/**
+	 * 获得当前播放进度 (秒)
+	 * @returns {number} 当前播放进度 (秒)
+	 */
+	get currentTime() {
+		return this._audioEl.currentTime;
+	}
+
+	/**
+	 * 获取底层音频元素
+	 * @returns {HTMLAudioElement} 底层音频元素
+	 */
+	get audioElement() {
+		return this._audioEl;
+	}
+
+	/**
 	 * 销毁播放器，恢复原始 HTML
 	 */
 	destroy() {
+		// 销毁前触发 destroy 事件
+		this._emitEvent('destroy');
+		this._customEventAbortController.abort();
 		this._eventAbortController.abort();
 		this._e.innerHTML = this._previousHtml;
 		this._e.setAttribute('style', this._previousStyle);
@@ -727,6 +789,74 @@ class BBlockPlayer {
 	}
 
 	/**
+	 * 监听播放器事件，同一个事件名可以注册多个回调函数
+	 * @param {string} eventName 事件名称
+	 * @param {Function} callback 回调函数
+	 */
+	on(eventName, callback) {
+		// 先检查是不是 audio 事件
+		if (this._isAudioEvent(eventName)) {
+			// 如果是 audio 事件，就直接注册到 audio 元素上，透传
+			this._audioEl.addEventListener(eventName, callback, { signal: this._customEventAbortController.signal });
+			return;
+		}
+		if (!this._listeners.has(eventName)) {
+			this._listeners.set(eventName, new Set());
+		}
+		this._listeners.get(eventName).add(callback);
+	}
+
+	/**
+	 * 取消监听播放器事件
+	 * @param {string} eventName 事件名称
+	 * @param {Function} callback 回调函数，必须和注册时是同一个引用
+	 */
+	off(eventName, callback) {
+		if (this._isAudioEvent(eventName)) {
+			// 如果是 audio 事件，就直接取消注册到 audio 元素上，透传
+			this._audioEl.removeEventListener(eventName, callback);
+			return;
+		}
+		if (!this._listeners.has(eventName)) return;
+		this._listeners.get(eventName).delete(callback);
+	}
+
+	/**
+	 * 取消监听所有播放器事件
+	 */
+	offAll() {
+		this._customEventAbortController.abort();
+		// abortController 是没法重复使用滴！
+		this._customEventAbortController = new AbortController();
+		this._listeners.clear();
+	}
+
+	/**
+	 * 检查是不是 audio 事件
+	 * @returns {boolean} 是否是 audio 事件
+	 */
+	_isAudioEvent(eventName) {
+		const prop = 'on' + eventName.toLowerCase();
+		return prop in this._audioEl;
+	}
+
+	/**
+	 * 激发自定义事件
+	 * @param {string} eventName 事件名称
+	 * @param  {...any} args 事件参数，传递给回调方法
+	 */
+	_emitEvent(eventName, ...args) {
+		if (!this._listeners.has(eventName)) return;
+		for (const callback of this._listeners.get(eventName)) {
+			try {
+				callback(...args);
+			} catch (e) {
+				console.error(`Error in event listener for ${eventName}:`, e);
+			}
+		}
+	}
+
+	/**
 	 * 准备展示控制面板
 	 */
 	_readyToShowControls() {
@@ -741,6 +871,7 @@ class BBlockPlayer {
 			this._controlsShowTimer = null;
 		}
 		this._controlsShowTimer = setTimeout(() => {
+			this._emitEvent('controlsshow');
 			this._wrapperEl.classList.add('controls-show');
 			this._setControlsReturnTimer();
 			this._controlsShowTimer = null;
@@ -785,6 +916,7 @@ class BBlockPlayer {
 	 * 隐藏控制面板
 	 */
 	_hideControls() {
+		if (!this._wrapperEl.classList.contains('controls-show')) return;
 		if (this._controlsShowTimer !== null) {
 			clearTimeout(this._controlsShowTimer);
 			this._controlsShowTimer = null;
@@ -797,6 +929,8 @@ class BBlockPlayer {
 		// 控制状态复位
 		this._stopControlling();
 		this._dontShowControls = false;
+		// 激发事件
+		this._emitEvent('controlshide');
 	}
 };
 
@@ -867,10 +1001,10 @@ const bblock = {
 	}
 };
 
-if(typeof window !== 'undefined') {
+if (typeof window !== 'undefined') {
 	window.bblock = bblock;
 }
 
-if(typeof document !== 'undefined') {
+if (typeof document !== 'undefined') {
 	bblock.s();
 }
