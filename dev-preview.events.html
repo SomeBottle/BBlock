@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>BBlock API / 事件检查</title>
+	<style>
+		body { margin: 0; background: rgb(151, 151, 151); color: #252525; font: 14px/1.6 system-ui, sans-serif; }
+		main { max-width: 1180px; margin: 28px auto; padding: 0 20px; }
+		h1 { margin: 0; font-size: 26px; }
+		h2 { margin: 0 0 12px; font-size: 17px; }
+		p { margin: 8px 0; }
+		code, pre { font-family: ui-monospace, Consolas, monospace; }
+		.preview-panel { padding: 18px; border: 1px solid #ffffff65; border-radius: 10px; background: #eeeeee; }
+		.preview-players { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 18px 0; }
+		.preview-player { text-align: center; cursor: pointer; }
+		.preview-player[data-selected="true"] { outline: 3px solid #586bb2; }
+		.preview-player small { display: block; color: #555; }
+		.preview-slot { min-height: 158px; display: flex; align-items: center; justify-content: center; }
+		.preview-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+		.preview-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
+		.preview-row label { display: inline-flex; align-items: center; gap: 6px; }
+		.preview-panel button, .preview-panel select, .preview-panel input { font: inherit; }
+		.preview-panel button, .preview-panel select, .preview-panel input[type="number"], .preview-panel input[type="text"] {
+			padding: 6px 10px; border: 1px solid #bbb; border-radius: 5px; background: #fff; color: inherit;
+		}
+		.preview-panel button { cursor: pointer; }
+		.preview-panel button:hover:enabled { background: #e1e6f7; border-color: #586bb2; }
+		.preview-panel button:disabled, .preview-panel input:disabled { opacity: .5; cursor: default; }
+		.preview-panel :focus-visible { outline: 2px solid #586bb2; outline-offset: 2px; }
+		.preview-panel input[type="number"] { width: 78px; }
+		.preview-panel input[type="text"] { flex: 1; min-width: 120px; }
+		.preview-panel input[type="range"] { flex: 1; min-width: 100px; accent-color: #586bb2; }
+		.preview-hint { color: #555; font-size: 13px; }
+		.preview-status { padding: 8px 12px; border-radius: 5px; background: #ffffffa8; }
+		.preview-error { color: #a12c25; }
+		.preview-success { color: #246b40; }
+		#state { min-height: 196px; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+		#event-counts { display: flex; flex-wrap: wrap; gap: 6px; }
+		.preview-event { padding: 3px 7px; border-radius: 4px; background: #ddd; font: 12px/1.7 ui-monospace, Consolas, monospace; }
+		.preview-event[data-seen="true"] { background: #d5e6d8; color: #215a32; }
+		.preview-log-panel { margin-top: 18px; }
+		#event-log { height: 300px; overflow: auto; border-radius: 6px; background: #252731; color: #e5e7ef; padding: 10px; font: 12px/1.7 ui-monospace, Consolas, monospace; }
+		.preview-log-line { white-space: pre-wrap; overflow-wrap: anywhere; border-bottom: 1px solid #ffffff0b; }
+		.preview-log-line[data-kind="error"] { color: #ffaaa0; }
+		.preview-log-line[data-kind="action"] { color: #b5c7ff; }
+		#check-results { padding-left: 24px; }
+		#check-results li { margin: 5px 0; overflow-wrap: anywhere; }
+		footer { margin: 18px 0; color: #333; }
+		@media (max-width: 800px) { .preview-players { grid-template-columns: repeat(2, minmax(0, 1fr)); } .preview-grid { grid-template-columns: 1fr; } }
+		@media (max-width: 420px) { main { padding: 0 10px; } .preview-panel { padding: 12px; } }
+	</style>
+</head>
+
+<body>
+	<main>
+		<header>
+			<h1>BBlock API / 事件检查</h1>
+			<p>直接加载当前 <code>src/</code>，修改源码后刷新即可。点击播放器卡片切换操作对象。</p>
+			<p id="boot-status" class="preview-status" role="status">正在加载播放器源码…</p>
+		</header>
+
+		<div class="preview-players">
+			<article class="preview-panel preview-player" data-index="0" data-selected="true">
+				<strong>本地长音频</strong><small>24 秒 · 检查播放、进度、拖拽</small>
+				<div class="preview-slot"><bblock id="player-long" style="display:none"></bblock></div>
+			</article>
+			<article class="preview-panel preview-player" data-index="1">
+				<strong>本地短音频</strong><small>3 秒 · 检查 ended / 循环</small>
+				<div class="preview-slot"><bblock id="player-short" style="display:none"></bblock></div>
+			</article>
+			<article class="preview-panel preview-player" data-index="2">
+				<strong>Sing My Pleasure</strong><small>原预览中的远程音源</small>
+				<div class="preview-slot"><bblock id="player-remote" style="display:none"></bblock></div>
+			</article>
+			<article class="preview-panel preview-player" data-index="3">
+				<strong>ティアラ</strong><small>原预览中的远程音源 · en-US</small>
+				<div class="preview-slot"><bblock id="player-remote-2" style="display:none"></bblock></div>
+			</article>
+		</div>
+
+		<div class="preview-grid">
+			<section class="preview-panel">
+				<h2>方法与属性</h2>
+				<fieldset id="method-controls" disabled style="border:0;padding:0;margin:0;min-width:0">
+					<div class="preview-row"><label>当前播放器 <select id="player-select"></select></label></div>
+					<div class="preview-row">
+						<button data-action="play">play()</button><button data-action="pause">pause()</button>
+						<button data-action="audio">检查 audioElement</button>
+						<label><input id="audio-loop" type="checkbox">audioElement.loop</label>
+					</div>
+					<div class="preview-row">
+						<label for="volume-input">volume =</label><input id="volume-input" type="number" step="0.1" value="0.25">
+						<button data-action="volume">设置音量</button>
+						<button data-action="volume-low">设为 -0.5</button><button data-action="volume-high">设为 1.5</button>
+					</div>
+					<div class="preview-row"><label for="volume-slider">音量拖动</label><input id="volume-slider" type="range" min="0" max="1" step="0.01" value="0.25"></div>
+					<div class="preview-row">
+						<label for="seek-input">seek(秒)</label><input id="seek-input" type="number" step="0.1" value="5">
+						<button data-action="seek">跳转</button><button data-action="seek-low">seek(-5)</button><button data-action="seek-high">超过总时长</button>
+					</div>
+					<div class="preview-row"><label for="seek-slider">进度拖动</label><input id="seek-slider" type="range" min="0" max="1" step="0.001" value="0" disabled></div>
+					<div class="preview-row">
+						<input id="reload-title" type="text" aria-label="重新加载时的标题" value="重载后的播放器">
+						<button data-action="reload">reload({ title })</button><button data-action="destroy">destroy()</button>
+					</div>
+					<div class="preview-row"><button data-action="recreate">重建 / 恢复原配置</button></div>
+				</fieldset>
+				<p class="preview-hint">本地音频由页面生成；初始音量为 0.25。播放后悬停或点击方块背景，展开控制面板，再拖动音量 / 进度图标。</p>
+				<p class="preview-hint">首次播放会触发 tipshow / tiphide。调节模式结束可能需要移出方块或等待自动回撤，留意 start / end 是否配对。</p>
+			</section>
+
+			<section class="preview-panel">
+				<h2>实时状态</h2>
+				<pre id="state">等待初始化…</pre>
+				<h2>当前播放器事件计数</h2>
+				<div id="event-counts"></div>
+				<p id="observer-status" class="preview-hint" role="status"></p>
+			</section>
+
+			<section class="preview-panel">
+				<h2>监听器操作</h2>
+				<fieldset id="listener-controls" disabled style="border:0;padding:0;margin:0;min-width:0">
+					<div class="preview-row"><label>事件 <select id="probe-event"></select></label></div>
+					<div class="preview-row">
+						<button data-action="on-a">on(事件, A)</button><button data-action="on-b">on(事件, B)</button>
+						<button data-action="off-a">off(事件, A)</button><button data-action="off-b">off(事件, B)</button>
+					</div>
+					<p id="probe-status" class="preview-status">A: 0 次 / B: 0 次</p>
+					<div class="preview-row"><button data-action="off-all">offAll()</button><button data-action="observe">重新注册事件日志</button></div>
+				</fieldset>
+				<p class="preview-hint">A、B 使用固定回调引用；重复 on 可检查去重。volumechange 可用音量按钮触发，controlsshow 可用方块面板触发。</p>
+				<p class="preview-hint">offAll 会一并移除当前播放器的日志监听；先操作确认不再记录，再重新注册。reload / 重建后会自动重新注册日志，A、B 需手动注册。</p>
+			</section>
+
+			<section class="preview-panel">
+				<h2>自动检查</h2>
+				<button id="run-checks" disabled>运行 API / 监听器检查</button>
+				<p class="preview-hint">使用独立的本地音频实例检查音量边界、seek、事件透传、多个回调、off、offAll、reload、destroy。不会自动播放。</p>
+				<ol id="check-results" aria-live="polite"></ol>
+			</section>
+		</div>
+
+		<section class="preview-panel preview-log-panel">
+			<h2>事件日志</h2>
+			<div class="preview-row">
+				<label>显示 <select id="log-player"><option value="all">全部播放器</option><option value="selected">当前播放器</option></select></label>
+				<label><input id="log-timeupdate" type="checkbox">记录 timeupdate</label>
+				<label><input id="log-autoscroll" type="checkbox" checked>自动滚动</label>
+				<button id="clear-log">清空日志 / 计数</button>
+			</div>
+			<div id="event-log" aria-label="播放器事件日志"></div>
+			<p class="preview-hint">最多保留 250 条。原生事件记录 Event 类型及音频状态；tipshow / tiphide 记录 message、duration。计数包含未显示的 timeupdate。</p>
+		</section>
+		<footer>BBlock Preview · 请通过 HTTP 服务打开此页，与 preview.html 相同，例如 <code>python3 -m http.server 8000</code>。</footer>
+	</main>
+
+	<script>
+		(() => {
+			'use strict';
+			const $ = (id) => document.getElementById(id);
+			const nativeEvents = ['loadstart', 'loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'play', 'playing', 'pause', 'waiting', 'seeking', 'seeked', 'timeupdate', 'volumechange', 'ended', 'error', 'emptied', 'abort'];
+			const customEvents = ['controlsshow', 'controlshide', 'volumecontrolstart', 'volumecontrolend', 'progresscontrolstart', 'progresscontrolend', 'tipshow', 'tiphide', 'destroy'];
+			const eventNames = [...nativeEvents, ...customEvents];
+			const entries = [];
+			const logs = [];
+			const audioURLs = [];
+			let selectedIndex = 0;
+			let stateTimer;
+			const selected = () => entries[selectedIndex];
+			const number = (value) => Number.isFinite(value) ? value.toFixed(3) : String(value);
+
+			// 生成 PCM WAV，避免远程音源故障干扰方法 / 事件检查。
+			function makeAudioURL(seconds) {
+				const sampleRate = 8000;
+				const samples = sampleRate * seconds;
+				const buffer = new ArrayBuffer(44 + samples * 2);
+				const view = new DataView(buffer);
+				const writeText = (offset, text) => [...text].forEach((char, index) => view.setUint8(offset + index, char.charCodeAt(0)));
+				writeText(0, 'RIFF'); view.setUint32(4, 36 + samples * 2, true); writeText(8, 'WAVE');
+				writeText(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+				view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+				writeText(36, 'data'); view.setUint32(40, samples * 2, true);
+				for (let index = 0; index < samples; index++) {
+					const time = index / sampleRate;
+					const frequency = Math.floor(time) % 2 ? 523.25 : 440;
+					const fade = Math.min(1, time / 0.03, (seconds - time) / 0.03);
+					view.setInt16(44 + index * 2, Math.sin(2 * Math.PI * frequency * time) * 2400 * fade, true);
+				}
+				const url = URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' }));
+				audioURLs.push(url);
+				return url;
+			}
+
+			function log(entry, name, detail = '', kind = 'event') {
+				logs.push({ index: entry ? entries.indexOf(entry) : -1, time: new Date().toLocaleTimeString('zh-CN', { hour12: false }), player: entry ? `${entry.name} #${entry.player.id}` : '检查页', name, detail, kind });
+				if (logs.length > 250) logs.shift();
+				renderLog();
+			}
+
+			function renderLog() {
+				const container = $('event-log');
+				const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 40;
+				const oldTop = container.scrollTop;
+				container.replaceChildren(...logs.filter((item) => $('log-player').value === 'all' || item.index === selectedIndex || item.index === -1).map((item) => {
+					const line = document.createElement('div');
+					line.className = 'preview-log-line';
+					line.dataset.kind = item.kind;
+					line.textContent = `${item.time} [${item.player}] ${item.name}${item.detail ? ' · ' + item.detail : ''}`;
+					return line;
+				}));
+				container.scrollTop = $('log-autoscroll').checked || nearBottom ? container.scrollHeight : oldTop;
+			}
+
+			function observe(entry) {
+				if (entry.observing || entry.player.destroyed) return;
+				for (const name of eventNames) {
+					const callback = (...args) => {
+						entry.counts[name] = (entry.counts[name] || 0) + 1;
+						if (name === 'destroy') {
+							entry.observing = false;
+							entry.probes.clear();
+						}
+						if (name === 'timeupdate' && !$('log-timeupdate').checked) return;
+						const audio = entry.player.audioElement;
+						const detail = nativeEvents.includes(name)
+							? `${args[0].constructor.name}; time=${number(audio.currentTime)}; volume=${number(audio.volume)}; paused=${audio.paused}${audio.error ? '; error=' + audio.error.code + ': ' + audio.error.message : ''}`
+							: args.length ? JSON.stringify({ message: args[0], duration: args[1] }) : '';
+						log(entry, name, detail, name === 'error' ? 'error' : 'event');
+					};
+					entry.player.on(name, callback);
+				}
+				entry.observing = true;
+			}
+
+			function selectPlayer(index) {
+				selectedIndex = index;
+				$('player-select').value = String(index);
+				document.querySelectorAll('.preview-player').forEach((card) => card.dataset.selected = String(Number(card.dataset.index) === index));
+				$('volume-input').value = selected().player.volume;
+				renderState();
+				renderLog();
+			}
+
+			function updatePlayerOption(entry) {
+				$('player-select').options[entries.indexOf(entry)].textContent = `${entry.name} (#${entry.player.id})`;
+			}
+
+			function renderState() {
+				const entry = selected();
+				if (!entry) return;
+				const player = entry.player;
+				const audio = player.audioElement;
+				const hasDuration = Number.isFinite(audio.duration) && audio.duration > 0;
+				$('state').textContent = [
+					`id: ${player.id}    destroyed: ${player.destroyed}`,
+					`volume: ${number(player.volume)}    currentTime: ${number(player.currentTime)} s`,
+					`duration: ${number(audio.duration)} s    paused: ${audio.paused}    ended: ${audio.ended}`,
+					`readyState: ${audio.readyState}    networkState: ${audio.networkState}    loop: ${audio.loop}`,
+					`audioElement: ${audio.constructor.name}    isConnected: ${audio.isConnected}`,
+					`bblock.get(id) === player: ${bblock.get(player.id) === player}`,
+					`currentPlayers: [${bblock.currentPlayers.map(([id]) => id).join(', ')}]`,
+					`error: ${audio.error ? audio.error.code + ' / ' + audio.error.message : '无'}`
+				].join('\n');
+				$('volume-slider').value = player.volume;
+				$('seek-slider').disabled = player.destroyed || !hasDuration;
+				$('seek-slider').value = hasDuration ? player.currentTime / audio.duration : 0;
+				$('audio-loop').checked = audio.loop;
+				for (const button of document.querySelectorAll('[data-action]')) button.disabled = player.destroyed && !['recreate', 'reload'].includes(button.dataset.action);
+				for (const id of ['volume-input', 'volume-slider', 'seek-input', 'audio-loop', 'probe-event']) $(id).disabled = player.destroyed;
+				$('observer-status').textContent = entry.observing ? '日志监听已注册（通过 player.on）。' : '日志监听已移除；可点击“重新注册事件日志”恢复。';
+				$('event-counts').replaceChildren(...eventNames.map((name) => {
+					const badge = document.createElement('span');
+					badge.className = 'preview-event';
+					badge.dataset.seen = String(Boolean(entry.counts[name]));
+					badge.textContent = `${name}: ${entry.counts[name] || 0}`;
+					return badge;
+				}));
+				const eventName = $('probe-event').value;
+				$('probe-status').textContent = ['A', 'B'].map((label) => {
+					const probe = entry.probes.get(`${eventName}:${label}`);
+					return `${label}: ${probe ? probe.count : 0} 次 / ${probe && probe.registered ? '已调用 on' : '未注册或已调用 off'}`;
+				}).join('；');
+			}
+
+			function probe(entry, label, register) {
+				const name = $('probe-event').value;
+				const key = `${name}:${label}`;
+				if (!entry.probes.has(key)) {
+					const item = { count: 0, registered: false };
+					item.callback = (...args) => {
+						item.count++;
+						log(entry, `回调 ${label} / ${name}`, `第 ${item.count} 次；参数=${nativeEvents.includes(name) ? args[0].constructor.name : JSON.stringify(args)}`);
+					};
+					entry.probes.set(key, item);
+				}
+				const item = entry.probes.get(key);
+				entry.player[register ? 'on' : 'off'](name, item.callback);
+				item.registered = register;
+				log(entry, `${register ? 'on' : 'off'}('${name}', ${label})`, '', 'action');
+			}
+
+			function inputNumber(id) {
+				const value = $(id).valueAsNumber;
+				if (!Number.isFinite(value)) throw new Error('请输入有限数值。');
+				return value;
+			}
+
+			function seek(player, value) {
+				if (!Number.isFinite(player.audioElement.duration)) throw new Error('音频元数据尚未加载，暂时无法 seek。');
+				player.seek(value);
+			}
+
+			const actions = {
+				play: (entry) => entry.player.play(),
+				pause: (entry) => entry.player.pause(),
+				audio: (entry) => {
+					const audio = entry.player.audioElement;
+					log(entry, 'audioElement', `HTMLAudioElement=${audio instanceof HTMLAudioElement}; 与 DOM 音频相同=${entry.element.querySelector('audio') === audio}`, 'action');
+					console.log('当前播放器 / audioElement:', entry.player, audio);
+				},
+				volume: (entry) => entry.player.volume = inputNumber('volume-input'),
+				'volume-low': (entry) => entry.player.volume = -0.5,
+				'volume-high': (entry) => entry.player.volume = 1.5,
+				seek: (entry) => seek(entry.player, inputNumber('seek-input')),
+				'seek-low': (entry) => seek(entry.player, -5),
+				'seek-high': (entry) => seek(entry.player, entry.player.audioElement.duration + 10),
+				reload: (entry) => {
+					entry.player.pause();
+					entry.player.reload({ title: $('reload-title').value });
+					entry.probes.clear(); entry.observing = false;
+					observe(entry); entry.player.volume = 0.25;
+						updatePlayerOption(entry);
+				},
+				destroy: (entry) => { entry.player.pause(); entry.player.destroy(); },
+				recreate: (entry) => {
+					entry.player.pause();
+					if (!entry.player.destroyed) entry.player.destroy();
+					entry.player = bblock.c(entry.element, { ...entry.config });
+					entry.probes.clear(); entry.observing = false;
+					observe(entry); entry.player.volume = 0.25;
+						updatePlayerOption(entry);
+				},
+				'on-a': (entry) => probe(entry, 'A', true), 'on-b': (entry) => probe(entry, 'B', true),
+				'off-a': (entry) => probe(entry, 'A', false), 'off-b': (entry) => probe(entry, 'B', false),
+				'off-all': (entry) => { entry.player.offAll(); entry.observing = false; entry.probes.clear(); },
+				observe
+			};
+			document.querySelectorAll('[data-action]').forEach((button) => button.addEventListener('click', () => {
+				try { log(selected(), button.textContent, '', 'action'); actions[button.dataset.action](selected()); }
+				catch (error) { log(selected(), button.textContent, error.message, 'error'); }
+				renderState();
+			}));
+			$('player-select').addEventListener('change', () => selectPlayer(Number($('player-select').value)));
+			document.querySelectorAll('.preview-player').forEach((card) => card.addEventListener('click', () => { if (entries.length) selectPlayer(Number(card.dataset.index)); }));
+			$('probe-event').addEventListener('change', renderState);
+			$('log-player').addEventListener('change', renderLog);
+			$('clear-log').addEventListener('click', () => { logs.length = 0; entries.forEach((entry) => entry.counts = {}); renderLog(); renderState(); });
+			$('audio-loop').addEventListener('change', () => { selected().player.audioElement.loop = $('audio-loop').checked; log(selected(), 'audioElement.loop', String($('audio-loop').checked), 'action'); });
+			$('volume-slider').addEventListener('input', () => { selected().player.volume = Number($('volume-slider').value); $('volume-input').value = $('volume-slider').value; });
+			$('seek-slider').addEventListener('input', () => {
+				try { seek(selected().player, Number($('seek-slider').value) * selected().player.audioElement.duration); }
+				catch (error) { log(selected(), 'seek', error.message, 'error'); }
+			});
+
+			function waitForMetadata(audio) {
+				if (audio.readyState >= 1 && Number.isFinite(audio.duration)) return Promise.resolve();
+				return new Promise((resolve, reject) => {
+					const cleanup = () => { clearTimeout(timer); audio.removeEventListener('loadedmetadata', ready); audio.removeEventListener('error', failed); };
+					const ready = () => { cleanup(); resolve(); };
+					const failed = () => { cleanup(); reject(new Error('本地测试音频加载失败。')); };
+					const timer = setTimeout(() => { cleanup(); reject(new Error('等待音频元数据超时。')); }, 5000);
+					audio.addEventListener('loadedmetadata', ready); audio.addEventListener('error', failed);
+				});
+			}
+
+			async function runChecks() {
+				const button = $('run-checks');
+				button.disabled = true; button.textContent = '检查中…'; $('check-results').replaceChildren();
+				const sandbox = document.createElement('div');
+				sandbox.hidden = true;
+				const host = document.createElement('div');
+				sandbox.appendChild(host); document.body.appendChild(sandbox);
+				let player;
+				let passed = 0, failed = 0;
+				const assert = (condition, detail) => { if (!condition) throw new Error(detail); };
+				const check = async (name, callback) => {
+					const item = document.createElement('li');
+					try { await callback(); item.textContent = `通过 · ${name}`; item.className = 'preview-success'; passed++; }
+					catch (error) { item.textContent = `失败 · ${name}：${error.message}`; item.className = 'preview-error'; failed++; }
+					$('check-results').appendChild(item);
+				};
+				try {
+					player = bblock.c(host, { src: audioURLs[1], title: '自动检查' });
+					await waitForMetadata(player.audioElement);
+					await check('audioElement / get / currentPlayers', () => {
+						assert(player.audioElement instanceof HTMLAudioElement && player.audioElement === host.querySelector('audio'), '音频元素不匹配');
+						assert(bblock.get(player.id) === player && bblock.currentPlayers.some(([id, instance]) => id === player.id && instance === player), '实例未在注册表中');
+					});
+					await check('volume 读写与上下界', () => {
+						for (const [value, expected] of [[0.35, 0.35], [-0.5, 0], [1.5, 1]]) {
+							player.volume = value; assert(Math.abs(player.volume - expected) < 0.001 && player.volume === player.audioElement.volume, `volume=${value} 实际为 ${player.volume}`);
+						}
+					});
+					await check('seek / currentTime 与上下界', () => {
+						for (const [value, expected] of [[1, 1], [-5, 0], [100, player.audioElement.duration]]) {
+							player.seek(value); assert(Math.abs(player.currentTime - expected) < 0.05, `seek(${value}) 实际为 ${player.currentTime}`);
+						}
+					});
+					// 手动派发原生事件仅检查监听器路由、回调参数及解绑；真实媒体事件请在上方操作区检查。
+					await check('on 原生事件透传 / 多回调 / 重复注册去重（合成 volumechange）', () => {
+						player.offAll();
+						let countA = 0, countB = 0, received;
+						const callbackA = (event) => { countA++; received = event; };
+						const callbackB = () => countB++;
+						player.on('volumechange', callbackA); player.on('volumechange', callbackA); player.on('volumechange', callbackB);
+						const event = new Event('volumechange'); player.audioElement.dispatchEvent(event);
+						assert(countA === 1 && countB === 1 && received === event && event.target === player.audioElement, `A=${countA}, B=${countB}, Event 透传=${received === event}`);
+					});
+					await check('off 移除单个原生音频回调（合成 volumechange）', () => {
+						player.offAll();
+						let countA = 0, countB = 0;
+						const callbackA = () => countA++, callbackB = () => countB++;
+						player.on('volumechange', callbackA); player.on('volumechange', callbackB); player.off('volumechange', callbackA);
+						player.audioElement.dispatchEvent(new Event('volumechange'));
+						assert(countA === 0 && countB === 1, `预期 A=0, B=1；实际 A=${countA}, B=${countB}`);
+					});
+					await check('自定义事件多回调 / 重复注册去重（真实 destroy）', () => {
+						player.offAll();
+						let countA = 0, countB = 0;
+						const callbackA = () => countA++, callbackB = () => countB++;
+						player.on('destroy', callbackA); player.on('destroy', callbackA); player.on('destroy', callbackB); player.destroy();
+						assert(countA === 1 && countB === 1, `A=${countA}, B=${countB}`);
+					});
+					await check('off 移除单个自定义回调（真实 destroy）', () => {
+						player.reload();
+						let countA = 0, countB = 0;
+						const callbackA = () => countA++, callbackB = () => countB++;
+						player.on('destroy', callbackA); player.on('destroy', callbackB); player.off('destroy', callbackA); player.destroy();
+						assert(countA === 0 && countB === 1, `预期 A=0, B=1；实际 A=${countA}, B=${countB}`);
+					});
+					await check('offAll 清除原生及自定义监听，之后可重新 on', () => {
+						player.reload();
+						let oldCount = 0, newCount = 0;
+						player.on('volumechange', () => oldCount++); player.on('destroy', () => oldCount++); player.offAll();
+						player.audioElement.dispatchEvent(new Event('volumechange'));
+						player.on('volumechange', () => newCount++); player.on('destroy', () => newCount++);
+						player.audioElement.dispatchEvent(new Event('volumechange')); player.destroy();
+						assert(oldCount === 0 && newCount === 2, `旧回调=${oldCount}, 新回调=${newCount}`);
+					});
+					await check('reload 更新配置、保留 id、替换音频、清除旧监听', () => {
+						player.reload();
+						const oldAudio = player.audioElement, id = player.id;
+						let oldCount = 0, destroyCount = 0;
+						player.on('volumechange', () => oldCount++); player.on('destroy', () => destroyCount++);
+						player.reload({ title: '标题已更新' }); oldAudio.dispatchEvent(new Event('volumechange'));
+						assert(!player.destroyed && player.id === id && player.audioElement !== oldAudio && bblock.get(id) === player, '重载后实例状态不正确');
+						assert(host.querySelector('.title').textContent === '标题已更新' && oldCount === 0 && destroyCount === 1, `旧回调=${oldCount}, destroy=${destroyCount}`);
+					});
+					await check('destroy 恢复 DOM、移除注册表与音频监听', () => {
+						const audio = player.audioElement;
+						let count = 0;
+						player.on('volumechange', () => count++); player.destroy(); audio.dispatchEvent(new Event('volumechange'));
+						assert(player.destroyed && bblock.get(player.id) === null && !bblock.currentPlayers.some(([id]) => id === player.id), '销毁后仍在注册表中');
+						assert(host.innerHTML === '' && !audio.isConnected && count === 0, `DOM 或监听未清理，回调=${count}`);
+					});
+				} catch (error) {
+					await check('初始化自动检查实例', () => { throw error; });
+				} finally {
+					if (player) { player.audioElement.pause(); if (!player.destroyed) player.destroy(); }
+					sandbox.remove(); button.disabled = false; button.textContent = `重新检查（通过 ${passed} / 失败 ${failed}）`;
+					log(null, '自动检查结束', `通过 ${passed} / 失败 ${failed}`, failed ? 'error' : 'action'); renderState();
+				}
+			}
+			$('run-checks').addEventListener('click', runChecks);
+
+			// 与 preview.html 相同：模拟构建脚本，在浏览器中注入当前 CSS / HTML。
+			async function initialize() {
+				const configs = [
+					{ src: makeAudioURL(24), title: '本地长音频 · 24s', artist: 'BBlock API Preview' },
+					{ src: makeAudioURL(3), title: '本地短音频 · 3s', artist: 'BBlock ended / loop Preview' },
+					{ src: 'https://sounds-static.xbottle.top/Sing%20My%20Pleasure%20-%20%E5%85%AB%E6%9C%A8%E6%B5%B7%E8%8E%89%20(320kbps).mp3', title: 'Sing My Pleasure', cover: 'https://p1.music.126.net/N5MGemr22IcT5GSHKhjDuA==/109951165870860904.jpg', artist: '八木海莉' },
+					{ src: 'https://music.163.com/song/media/outer/url?id=1950918260', title: 'ティアラ (feat. 初音ミク)', cover: 'https://p1.music.126.net/fWAIHaaQnnLoMaiyi-TgaA==/109951167478463917.jpg', artist: 'せきこみごはん / 初音ミク / test', language: 'en-US' }
+				];
+				const elements = [...document.querySelectorAll('bblock')];
+				elements.forEach((element, index) => element.textContent = JSON.stringify(configs[index]));
+				const escapeTemplateLiteral = (value) => value.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+				const [js, css, html] = await Promise.all(['bblock.js', 'bblock.css', 'bblock.html'].map(async (file) => {
+					const response = await fetch(`./src/${file}`, { cache: 'no-store' });
+					if (!response.ok) throw new Error(`加载 ${file} 失败：HTTP ${response.status}`);
+					return response.text();
+				}));
+				const assets = { css: escapeTemplateLiteral(css), html: escapeTemplateLiteral(html) };
+				const source = js.replace(/\{\{(CSS|HTML)\}\}/gi, (_, name) => assets[name.toLowerCase()]);
+				const style = document.createElement('style'); style.className = 'bblock-css'; style.textContent = css; document.head.appendChild(style);
+				const script = document.createElement('script'); script.textContent = source + '\n//# sourceURL=bblock.preview.new.js'; document.body.appendChild(script);
+				const names = ['本地长音频', '本地短音频', 'Sing My Pleasure', 'ティアラ'];
+				const players = bblock.currentPlayers.map(([, player]) => player);
+				if (players.length !== elements.length) throw new Error(`预期初始化 ${elements.length} 个播放器，实际 ${players.length} 个。`);
+				players.forEach((player, index) => {
+					const entry = { player, name: names[index], element: elements[index], config: configs[index], counts: {}, probes: new Map(), observing: false };
+					entries.push(entry); observe(entry); player.volume = 0.25;
+					$('player-select').add(new Option(`${entry.name} (#${player.id})`, String(index)));
+				});
+				eventNames.forEach((name) => $('probe-event').add(new Option(name, name)));
+				$('probe-event').value = 'volumechange';
+				$('method-controls').disabled = false; $('listener-controls').disabled = false; $('run-checks').disabled = false;
+				$('boot-status').textContent = '源码已加载 · 4 个播放器已初始化 · 可以开始检查';
+				selectPlayer(0); stateTimer = setInterval(renderState, 250);
+				log(null, '初始化完成', '可通过 window.bblock 在控制台访问实例。', 'action');
+			}
+			initialize().catch((error) => {
+				$('boot-status').classList.add('preview-error');
+				$('boot-status').textContent = `初始化失败：${error.message}。请确认通过 HTTP 打开此页，且 src/ 文件可访问。`;
+				log(null, '初始化失败', error.message, 'error'); console.error('BBlock preview failed:', error);
+			});
+			window.addEventListener('pagehide', (event) => {
+				if (event.persisted) return;
+				clearInterval(stateTimer); entries.forEach((entry) => entry.player.audioElement.pause()); audioURLs.forEach((url) => URL.revokeObjectURL(url));
+			});
+		})();
+	</script>
+</body>
+
+</html>
