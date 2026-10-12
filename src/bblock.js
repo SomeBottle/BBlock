@@ -1088,7 +1088,9 @@ const bblock = {
 						// 有播放源就可以构造播放器
 						objList.push(new BBlockPlayer(elements[i], parsed));
 					}
-				} catch (e) { }
+				} catch (e) {
+					console.error('Failed to parse <bblock> content as JSON:', e, " on element: ", elements[i]);
+				}
 			}
 		}
 		return objList;
