@@ -527,17 +527,17 @@
 }
 
 /* 播放状态 */
-.state-playing {
+.bblock-wrapper.state-playing {
 	--progress-width: 3.5px;
 }
 
-.state-playing .cover {
+.bblock-wrapper.state-playing .cover {
 	opacity: 0;
 	pointer-events: none;
 	user-select: none;
 }
 
-.state-playing .play {
+.bblock-wrapper.state-playing .play {
 	opacity: 0;
 	height: 25px;
 	width: 25px;
@@ -555,47 +555,45 @@
 */
 
 /* 错误和首次加载时隐藏播放按钮 */
-
-.state-error .play,
-.state-first-loading .play {
+.bblock-wrapper.state-error .play,
+.bblock-wrapper.state-first-loading .play {
 	opacity: 0;
 	pointer-events: none;
 }
 
-.state-error .cover {
+.bblock-wrapper.state-error .cover {
 	opacity: 1;
 	pointer-events: auto;
 	user-select: auto;
 }
 
-.state-error:hover .reload {
+.bblock-wrapper.state-error:hover .reload {
 	opacity: 1;
 	pointer-events: auto;
 }
 
 /* 错误和普通加载时覆盖暂停按钮的内联显隐样式 */
 
-.state-error .pause,
-.state-loading .pause {
+.bblock-wrapper.state-error .pause,
+.bblock-wrapper.state-loading .pause {
 	opacity: 0 !important;
 	pointer-events: none !important;
 }
 
 /* 控件显示状态 */
-.controls-show .controls {
+.bblock-wrapper.controls-show .controls {
 	opacity: 1;
 	pointer-events: auto;
 }
 
 /* 两种加载状态共用显隐规则 */
-
-.state-first-loading .loading,
-.state-loading .loading {
+.bblock-wrapper.state-first-loading .loading,
+.bblock-wrapper.state-loading .loading {
 	opacity: 1;
 }
 
 /* 首次加载状态 */
-.state-first-loading .loading {
+.bblock-wrapper.state-first-loading .loading {
 	background: rgba(255, 255, 255, 0.1);
 	background: rgb(255 255 255 / 10%);
 	-webkit-backdrop-filter: blur(5px);
@@ -605,6 +603,6 @@
 }
 
 /* 普通音频加载状态 */
-.state-loading .loading {
+.bblock-wrapper.state-loading .loading {
 	filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.7));
 }
