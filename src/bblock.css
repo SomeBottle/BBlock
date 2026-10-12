@@ -45,8 +45,12 @@
 	--progress-width: 0px;
 	--bblock-radius: 0.5em;
 	/* 边缘模糊半径 */
-	--edge-blur: 6px;
 	/* 固定最终模糊半径，透明度负责渐变 */
+	--edge-blur: 6px;
+	/* 进度轨道显示透明度 */
+	--progress-opacity: 0.6;
+	/* 进度轨道颜色, 默认为 none，采用自适应默认颜色 */
+	--progress-color: none;
 	position: relative;
 	isolation: isolate;
 	width: 128px;
@@ -239,7 +243,7 @@
 	/* progress 阈值：低于这个百分比就不显示 */
 	--threshold: 3;
 	/* progress 从 0 到 threshold 之间时，opacity 从 0 变为 1，这样有个渐入效果 */
-	opacity: clamp(0, calc(var(--progress) / var(--threshold)), 1);
+	opacity: calc(clamp(0, calc(var(--progress) / var(--threshold)), 1) * var(--progress-opacity));
 
 	/* 进度条渐变淡出角度 delta（不超过结束角度的一半） */
 	--base-fade: min(10deg, calc(var(--end) * 0.25));
@@ -249,15 +253,7 @@
 	--close: clamp(0, calc((var(--progress) - 96) / 4), 1);
 	/* 接近 100 时 fade 逐渐消失，闭合 */
 	--fade: calc(var(--base-fade) * (1 - var(--close)));
-	--progress-color: rgba(176, 203, 255, 0.38);
-
-	background:
-		conic-gradient(from -45deg,
-			transparent 0deg,
-			var(--progress-color) var(--fade),
-			var(--progress-color) calc(var(--end) - var(--fade)),
-			transparent var(--end),
-			transparent 360deg);
+	--default-progress-color: rgba(176, 203, 255, 0.38);
 
 	/* -webkit-mask-composite 使用 xor 表达同样的“挖空”效果 */
 	-webkit-mask:
@@ -277,8 +273,29 @@
 	mask-composite: exclude;
 
 	padding: var(--progress-width);
-	mix-blend-mode: difference;
+	background:
+		conic-gradient(from -45deg,
+			transparent 0deg,
+			var(--progress-color) var(--fade),
+			var(--progress-color) calc(var(--end) - var(--fade)),
+			transparent var(--end),
+			transparent 360deg);
+	mix-blend-mode: normal;
 	transition: 0.5s ease;
+}
+
+/* 进度轨道颜色为 none (未设定) 时，使用默认颜色 */
+@container style(--progress-color:none) {
+	.bblock-wrapper::before {
+		background:
+			conic-gradient(from -45deg,
+				transparent 0deg,
+				var(--default-progress-color) var(--fade),
+				var(--default-progress-color) calc(var(--end) - var(--fade)),
+				transparent var(--end),
+				transparent 360deg);
+		mix-blend-mode: difference;
+	}
 }
 
 /* 封皮与文本 */

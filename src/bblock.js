@@ -50,7 +50,12 @@ class BBlockPlayer {
 		}
 		for (let el of e) {
 			for (let k in kv) {
-				el.style[k] = kv[k];
+				if (k.startsWith('--')) {
+					// 设置的是变量属性
+					el.style.setProperty(k, kv[k]);
+				} else {
+					el.style[k] = kv[k];
+				}
 			}
 		}
 	}
@@ -216,9 +221,22 @@ class BBlockPlayer {
 
 		// 设置循环状态
 		if (this._config.loop === true || this._config.loop === 'true') {
-			this._audioEl.loop = true;
+			this.loop = true;
 		} else {
-			this._audioEl.loop = false;
+			this.loop = false;
+		}
+
+		// 设置音量
+		if (this._config.volume) {
+			this.volume = this._config.volume;
+		}
+
+		// 根据配置设置进度条样式 (颜色, 透明度)
+		if (this._config.progressColor) {
+			this.progressColor = this._config.progressColor;
+		}
+		if (this._config.progressOpacity) {
+			this.progressOpacity = this._config.progressOpacity;
 		}
 
 		// 设置开始播放的时间点
@@ -757,10 +775,52 @@ class BBlockPlayer {
 	 * @param {number} value 播放进度 (秒)
 	 */
 	seek(value) {
-		if(typeof value !== 'number' || !Number.isFinite(value)) {
+		if (typeof value !== 'number' || !Number.isFinite(value)) {
 			throw new TypeError('Seek value must be a finite number.');
 		}
 		this._audioEl.currentTime = Math.min(Math.max(value, 0), this._audioEl.duration);
+	}
+
+	/**
+	 * 设置进度条颜色
+	 * @param {string} value 进度条颜色，支持任何 CSS 颜色值，允许 none 值
+	 */
+	set progressColor(value) {
+		if (typeof value !== 'string') {
+			throw new TypeError('Progress color must be a string.');
+		}
+		// 允许 none
+		if (value !== 'none' && typeof CSS !== 'undefined' && !CSS.supports('color', value)) {
+			throw new Error('Invalid CSS color value.');
+		}
+		BBlockPlayer.style(this._wrapperEl, { '--progress-color': value });
+	}
+
+	/**
+	 * 获得现在的进度条颜色
+	 * @returns {string} 进度条颜色，支持任何 CSS 颜色值，可能有 none 值
+	 */
+	get progressColor() {
+		return getComputedStyle(this._wrapperEl).getPropertyValue('--progress-color').trim();
+	}
+
+	/**
+	 * 设置进度条透明度
+	 * @param {number} value 进度条透明度，范围为 0~1
+	 */
+	set progressOpacity(value) {
+		if (typeof value !== 'number' || !Number.isFinite(value)) {
+			throw new TypeError('Progress opacity must be a finite number.');
+		}
+		BBlockPlayer.style(this._wrapperEl, { '--progress-opacity': Math.min(Math.max(value, 0), 1) });
+	}
+
+	/**
+	 * 获得现在的进度条透明度
+	 * @returns {number} 进度条透明度，范围为 0~1
+	 */
+	get progressOpacity() {
+		return parseFloat(getComputedStyle(this._wrapperEl).getPropertyValue('--progress-opacity').trim());
 	}
 
 	/**
