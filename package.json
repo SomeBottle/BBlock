@@ -3,7 +3,8 @@
   "version": "2.0.0",
   "description": "Wow~you can really play! Square Music Player",
   "scripts": {
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "test": "node --test scripts/hash-classes.test.js"
   },
   "repository": {
     "type": "git",
@@ -20,8 +21,11 @@
   },
   "homepage": "https://github.com/SomeBottle/BBlock#readme",
   "devDependencies": {
+    "acorn": "^8.19.0",
     "clean-css": "^5.3.3",
+    "css-tree": "^3.2.1",
     "html-minifier-terser": "^7.2.0",
+    "parse5": "^7.3.0",
     "terser": "^5.51.2"
   }
 }

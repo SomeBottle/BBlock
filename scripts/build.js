@@ -3,6 +3,7 @@ const path = require('node:path');
 const CleanCSS = require('clean-css');
 const { minify: minifyHTML } = require('html-minifier-terser');
 const { minify: minifyJS } = require('terser');
+const { hashClasses } = require('./hash-classes');
 
 // 对反斜杠、反引号、$ 符号和大括号进行转义
 function escapeTemplateLiteral(value) {
@@ -14,11 +15,13 @@ function escapeTemplateLiteral(value) {
 
 async function build() {
     const root = path.resolve(__dirname, '..');
-    const [js, css, html] = await Promise.all(
+    const [rawJS, rawCSS, rawHTML] = await Promise.all(
         ['bblock.js', 'bblock.css', 'bblock.html'].map((file) =>
             readFile(path.join(root, 'src', file), 'utf8')
         )
     );
+    // CSS、HTML 和 JS 的 DOM 类名引用使用同一份哈希映射，源码保留可读类名
+    const { js, css, html, classMap } = hashClasses({ js: rawJS, css: rawCSS, html: rawHTML });
     // 精简 CSS 和 HTML
     const minifiedCSS = new CleanCSS({ rebase: false }).minify(css);
     if (minifiedCSS.errors.length) {
@@ -61,6 +64,8 @@ async function build() {
     // 将精简后的 UMD 和 ESM 产物写入 dist
     const outputDir = path.join(root, 'dist');
     await mkdir(outputDir, { recursive: true });
+    // 供调试定位使用，不嵌入运行时代码
+    await writeFile(path.join(outputDir, 'bblock.classes.json'), JSON.stringify(classMap, null, 2) + '\n', 'utf8');
     for (const [filename, result] of [
         ['bblock.umd.js', umdResult],
         ['bblock.esm.js', esmResult]
