@@ -217,12 +217,12 @@ class BBlockPlayer {
 		// 设置循环状态
 		if (this._config.loop === true || this._config.loop === 'true') {
 			this._audioEl.loop = true;
-		}else{
+		} else {
 			this._audioEl.loop = false;
 		}
 
 		// 设置开始播放的时间点
-		if (this._config.time&& Number.isFinite(this._config.time) && this._config.time >= 0) {
+		if (this._config.time && Number.isFinite(this._config.time) && this._config.time >= 0) {
 			this._audioEl.currentTime = this._config.time;
 		}
 
@@ -719,6 +719,9 @@ class BBlockPlayer {
 	 * @param {number} value 音量值，范围为 0~1
 	 */
 	set volume(value) {
+		if (typeof value !== 'number' || !Number.isFinite(value)) {
+			throw new TypeError('Volume value must be a finite number.');
+		}
 		this._audioEl.volume = Math.min(Math.max(value, 0), 1);
 	}
 
@@ -731,10 +734,32 @@ class BBlockPlayer {
 	}
 
 	/**
+	 * 设置是否循环播放
+	 * @param {boolean} value 是否循环播放
+	 */
+	set loop(value) {
+		if (typeof value !== 'boolean') {
+			throw new TypeError('Loop value must be a boolean.');
+		}
+		this._audioEl.loop = value;
+	}
+
+	/**
+	 * 获取是否循环播放
+	 * @returns {boolean} 是否循环播放
+	 */
+	get loop() {
+		return this._audioEl.loop;
+	}
+
+	/**
 	 * 设置播放进度
 	 * @param {number} value 播放进度 (秒)
 	 */
 	seek(value) {
+		if(typeof value !== 'number' || !Number.isFinite(value)) {
+			throw new TypeError('Seek value must be a finite number.');
+		}
 		this._audioEl.currentTime = Math.min(Math.max(value, 0), this._audioEl.duration);
 	}
 
