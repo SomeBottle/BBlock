@@ -1,0 +1,609 @@
+/* 动画与进度属性 */
+
+@keyframes titleMove {
+	0% {
+		transform: translateX(0);
+	}
+
+	40% {
+		transform: translateX(calc(-1 * var(--overflow-width)));
+	}
+
+	50% {
+		transform: translateX(calc(-1 * var(--overflow-width)));
+	}
+
+	90% {
+		transform: translateX(0);
+	}
+
+	100% {
+		transform: translateX(0);
+	}
+}
+
+@keyframes rotation {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+@property --progress {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0;
+}
+
+/* 容器与公共布局 */
+
+.bblock-wrapper {
+	--progress: 0;
+	--progress-width: 0px;
+	--bblock-radius: 0.5em;
+	/* 边缘模糊半径 */
+	/* 固定最终模糊半径，透明度负责渐变 */
+	--edge-blur: 6px;
+	/* 进度轨道显示透明度 */
+	--progress-opacity: 0.6;
+	/* 进度轨道颜色, 默认为 none，采用自适应默认颜色 */
+	--progress-color: none;
+	position: relative;
+	isolation: isolate;
+	width: 128px;
+	height: 128px;
+	overflow: hidden;
+	margin: 10px;
+	padding: 5px;
+	border-radius: var(--bblock-radius);
+	border: 0px solid rgba(10, 10, 10, 0);
+	transition: --progress 0.5s ease;
+	/* 裁掉混合层在圆角边界产生的亮色像素，不然进度轨会露出一些亮色像素，很难看 */
+	-webkit-clip-path: inset(0.5px round calc(var(--bblock-radius) - 0.5px));
+	clip-path: inset(0.5px round calc(var(--bblock-radius) - 0.5px));
+}
+
+.bblock-wrapper .default-bg,
+.bblock-wrapper .custom-bg,
+.bblock-wrapper .edge-sharp-default-bg,
+.bblock-wrapper .edge-sharp-custom-bg,
+.bblock-wrapper .loading,
+.bblock-wrapper .cover,
+.bblock-wrapper .controls {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+}
+
+.bblock-wrapper svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* 背景与进度效果 */
+
+.bblock-wrapper .default-bg,
+.bblock-wrapper .custom-bg,
+.bblock-wrapper .edge-sharp-default-bg,
+.bblock-wrapper .edge-sharp-custom-bg {
+	z-index: -1;
+	background: radial-gradient(ellipse at 12% 88%, rgba(255, 171, 120, .48), transparent 61%),
+		radial-gradient(ellipse at 87% 12%, rgba(177, 158, 235, .48), transparent 59%),
+		linear-gradient(137deg, #fff3e5 0%, #efd5dc 54%, #ced4f4 100%);
+	background-size: cover;
+	background-position: center center;
+	background-repeat: repeat;
+	box-sizing: border-box;
+	border: var(--progress-width) solid rgba(255, 255, 255, 0.25);
+	/* border: none; */
+	/* padding + background-origin 代替 border，实现开始播放时轻微缩小背景图片 */
+	/* padding: var(--progress-width); */
+	/* background-origin: content-box; */
+	/* 代替 border 的边缘颜色效果 */
+	/* box-shadow: inset 0 0 0 var(--progress-width) rgba(10, 10, 10, 0.3); */
+	/* 只过渡播放状态会改变的边框宽度，避免对整层做 all 过渡 */
+	transition: border-width 0.5s ease;
+}
+
+.bblock-wrapper .custom-bg,
+.bblock-wrapper .edge-sharp-custom-bg {
+	z-index: 0;
+}
+
+.bblock-wrapper .edge-blur {
+	/* 模糊最强的边缘宽度 */
+	--edge: 4px;
+	/* 过渡到清晰的距离，越大越柔和 */
+	--fade: 14px;
+	position: absolute;
+	z-index: 2;
+	/* inset 的回退写法，兼容较旧的 WebView */
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	inset: 0;
+	pointer-events: none;
+	-webkit-user-select: none;
+	user-select: none;
+	border-radius: 0;
+	-webkit-backdrop-filter: blur(var(--edge-blur));
+	backdrop-filter: blur(var(--edge-blur));
+
+	/* 边缘模糊过渡动画 */
+	opacity: 0;
+	transition: opacity 0.5s ease-out;
+}
+
+/* .edge-blur-active 控制边缘模糊效果的显示与隐藏 */
+.bblock-wrapper.edge-blur-active .edge-blur {
+	opacity: 1;
+}
+
+.bblock-wrapper .edge-sharp-x,
+.bblock-wrapper .edge-sharp-y {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	inset: 0;
+	pointer-events: none;
+}
+
+/*
+ * edge-blur 本质上是叠了一层背景（歌曲封面），然后通过 edge-sharp-x, edge-sharp-y 这两层（左右边缘、上下边缘）遮罩来实现边缘渐隐，配合 edge-blur 的 backdrop-filter: blur() 来实现边缘模糊效果  
+ * 这样写是为了提高兼容性，比如兼容 WebView 114 版本
+ */
+.bblock-wrapper .edge-sharp-x {
+	-webkit-mask-image: linear-gradient(to right,
+			rgba(0, 0, 0, 0) 0,
+			rgba(0, 0, 0, 0) var(--edge),
+			#000 var(--fade),
+			#000 calc(100% - var(--fade)),
+			rgba(0, 0, 0, 0) calc(100% - var(--edge)),
+			rgba(0, 0, 0, 0) 100%);
+	-webkit-mask-position: 0 0;
+	-webkit-mask-size: 100% 100%;
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-origin: border-box;
+	-webkit-mask-clip: border-box;
+	-webkit-mask-mode: alpha;
+
+	mask-image: linear-gradient(to right,
+			rgba(0, 0, 0, 0) 0,
+			rgba(0, 0, 0, 0) var(--edge),
+			#000 var(--fade),
+			#000 calc(100% - var(--fade)),
+			rgba(0, 0, 0, 0) calc(100% - var(--edge)),
+			rgba(0, 0, 0, 0) 100%);
+	mask-position: 0 0;
+	mask-size: 100% 100%;
+	mask-repeat: no-repeat;
+	mask-origin: border-box;
+	mask-clip: border-box;
+	mask-mode: alpha;
+}
+
+.bblock-wrapper .edge-sharp-y {
+	-webkit-mask-image: linear-gradient(to bottom,
+			rgba(0, 0, 0, 0) 0,
+			rgba(0, 0, 0, 0) var(--edge),
+			#000 var(--fade),
+			#000 calc(100% - var(--fade)),
+			rgba(0, 0, 0, 0) calc(100% - var(--edge)),
+			rgba(0, 0, 0, 0) 100%);
+	-webkit-mask-position: 0 0;
+	-webkit-mask-size: 100% 100%;
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-origin: border-box;
+	-webkit-mask-clip: border-box;
+	-webkit-mask-mode: alpha;
+
+	mask-image: linear-gradient(to bottom,
+			rgba(0, 0, 0, 0) 0,
+			rgba(0, 0, 0, 0) var(--edge),
+			#000 var(--fade),
+			#000 calc(100% - var(--fade)),
+			rgba(0, 0, 0, 0) calc(100% - var(--edge)),
+			rgba(0, 0, 0, 0) 100%);
+	mask-position: 0 0;
+	mask-size: 100% 100%;
+	mask-repeat: no-repeat;
+	mask-origin: border-box;
+	mask-clip: border-box;
+	mask-mode: alpha;
+}
+
+/*
+进度轨道
+*/
+.bblock-wrapper::before {
+	content: '';
+	position: absolute;
+	/* inset 的回退写法，兼容较旧的 WebView */
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	inset: 0;
+	pointer-events: none;
+	-webkit-user-select: none;
+	user-select: none;
+
+	z-index: 3;
+	border-radius: inherit;
+
+	/* progress 阈值：低于这个百分比就不显示 */
+	--threshold: 3;
+	/* progress 从 0 到 threshold 之间时，opacity 从 0 变为 1，这样有个渐入效果 */
+	opacity: calc(clamp(0, calc(var(--progress) / var(--threshold)), 1) * var(--progress-opacity));
+
+	/* 进度条渐变淡出角度 delta（不超过结束角度的一半） */
+	--base-fade: min(10deg, calc(var(--end) * 0.25));
+	/* 进度条末端角度 */
+	--end: calc(var(--progress) * 3.6deg);
+	/* 末端闭合系数，96 -> 100 时，从 0 线性升到 1，再留点轻微的过渡 */
+	--close: clamp(0, calc((var(--progress) - 96) / 4), 1);
+	/* 接近 100 时 fade 逐渐消失，闭合 */
+	--fade: calc(var(--base-fade) * (1 - var(--close)));
+	--default-progress-color: rgba(176, 203, 255, 0.38);
+
+	/* -webkit-mask-composite 使用 xor 表达同样的“挖空”效果 */
+	-webkit-mask:
+		linear-gradient(#000 0 0) content-box,
+		linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+
+	/* 标准的 mask 写法放在 -webkit- 写法后以兼容 firefox 
+		firefox 中 mask 是简写属性，就像设置 border 会覆盖 border-width 等属性一样，设置 mask 会重置 mask-composite 等属性
+		而 -webkit-mask-composite: xor 是非标准属性，firefox 不认识，所以不会覆盖 mask-composite: exclude
+
+		因此如果 mask 写法放在 -webkit-mask 写法前面，firefox 会把 mask-composite 重置，导致挖空效果失效
+	*/
+	mask:
+		linear-gradient(#000 0 0) content-box,
+		linear-gradient(#000 0 0);
+	mask-composite: exclude;
+
+	padding: var(--progress-width);
+	background:
+		conic-gradient(from -45deg,
+			transparent 0deg,
+			var(--progress-color) var(--fade),
+			var(--progress-color) calc(var(--end) - var(--fade)),
+			transparent var(--end),
+			transparent 360deg);
+	mix-blend-mode: normal;
+	transition: 0.5s ease;
+}
+
+/* 进度轨道颜色为 none (未设定) 时，使用默认颜色 */
+@container style(--progress-color:none) {
+	.bblock-wrapper::before {
+		background:
+			conic-gradient(from -45deg,
+				transparent 0deg,
+				var(--default-progress-color) var(--fade),
+				var(--default-progress-color) calc(var(--end) - var(--fade)),
+				transparent var(--end),
+				transparent 360deg);
+		mix-blend-mode: difference;
+	}
+}
+
+/* 封皮与文本 */
+
+.bblock-wrapper .cover {
+	z-index: 3;
+	background-color: rgba(0, 0, 0, 0.4);
+	transition: opacity 0.5s ease;
+}
+
+.bblock-wrapper .title-wrapper .title,
+.bblock-wrapper .artist-wrapper .artist {
+	display: inline-block;
+	white-space: nowrap;
+}
+
+.bblock-wrapper .title-wrapper {
+	position: absolute;
+	z-index: 3;
+	box-sizing: border-box;
+	text-align: left;
+	left: 0;
+	width: 100%;
+	padding: 5px 0 0 2px;
+	mask-image: linear-gradient(to right,
+			transparent 0,
+			#000 5px,
+			#000 calc(100% - 5px),
+			transparent 100%);
+	-webkit-mask-image: linear-gradient(to right,
+			transparent 0,
+			#000 5px,
+			#000 calc(100% - 5px),
+			transparent 100%);
+}
+
+.bblock-wrapper .title-wrapper .title {
+	color: #d8d8d8;
+	font-size: 16px;
+	padding: 0 5px;
+}
+
+.bblock-wrapper .moveAni {
+	animation: titleMove 5s linear infinite;
+}
+
+.bblock-wrapper .artist-wrapper {
+	position: absolute;
+	z-index: 3;
+	width: 90%;
+	text-align: right;
+	overflow: hidden;
+	right: 0;
+	bottom: 0;
+	margin: 0 5px 5px 0;
+}
+
+.bblock-wrapper .artist-scroll {
+	mask-image: linear-gradient(to right,
+			transparent 0,
+			#000 7px,
+			#000 calc(100% - 7px),
+			transparent 100%);
+	-webkit-mask-image: linear-gradient(to right,
+			transparent 0,
+			#000 7px,
+			#000 calc(100% - 7px),
+			transparent 100%);
+}
+
+.bblock-wrapper .artist-wrapper .artist {
+	color: #e3e2e2;
+	font-size: 10px;
+	padding: 0 0 0 5px;
+	transition: 2.5s linear;
+}
+
+.bblock-wrapper .moveTrans:hover {
+	transform: translateX(calc(-1 * var(--overflow-width)));
+}
+
+/* 播放、暂停与重载按钮 */
+
+.bblock-wrapper .reload {
+	position: absolute;
+	z-index: 4;
+	width: 40px;
+	height: 40px;
+	top: 50%;
+	left: 50%;
+	opacity: 0;
+	pointer-events: none;
+	transform: translate(-50%, -50%) rotate(-10deg);
+	color: rgb(209 209 209);
+	cursor: pointer;
+	transition: 0.4s ease;
+}
+
+.bblock-wrapper .reload:hover {
+	transform: translate(-50%, -50%) rotate(-45deg) scale(1.05);
+}
+
+.bblock-wrapper .play {
+	position: absolute;
+	z-index: 4;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	height: 32px;
+	width: 32px;
+	cursor: pointer;
+	transition: 0.4s ease;
+}
+
+.bblock-wrapper .play:hover {
+	transform: translate(-50%, -50%) scale(1.1);
+}
+
+.bblock-wrapper .pause {
+	position: absolute;
+	z-index: 2;
+	right: 6px;
+	bottom: 7px;
+	filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.6));
+	height: 25px;
+	width: 25px;
+	cursor: pointer;
+	transition: 0.4s ease;
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* 控制面板 */
+
+.bblock-wrapper .controls {
+	z-index: 4;
+	opacity: 0;
+	-webkit-backdrop-filter: blur(5px);
+	backdrop-filter: blur(5px);
+	background-color: rgba(0, 0, 0, 0.2);
+	pointer-events: none;
+	transition: opacity 0.5s ease;
+}
+
+.bblock-wrapper .controls>.bar {
+	position: absolute;
+	z-index: 4;
+	width: 0;
+	height: 100%;
+	left: 0;
+	top: 0;
+	background-color: rgba(5, 5, 5, 0.3);
+	transition: 0.4s ease;
+	cursor: pointer;
+}
+
+.bblock-wrapper .controls>.volume-icon,
+.bblock-wrapper .controls>.progress-icon {
+	position: absolute;
+	z-index: 4;
+	width: 35px;
+	height: 35px;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	color: #ffffff;
+	opacity: 0.7;
+	cursor: pointer;
+	transition: 0.4s ease;
+}
+
+.bblock-wrapper .controls>.volume-icon {
+	left: 25%;
+}
+
+.bblock-wrapper .controls>.progress-icon {
+	left: 75%;
+}
+
+.bblock-wrapper .controls>.active-icon {
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%) scale(1.5);
+	opacity: 0.4;
+	pointer-events: none;
+}
+
+.bblock-wrapper .controls>.hidden-icon {
+	opacity: 0;
+	z-index: -1;
+	pointer-events: none;
+}
+
+/* 加载与提示 */
+
+.bblock-wrapper .loading {
+	z-index: 6;
+	transition: 0.5s ease;
+	opacity: 0;
+	user-select: none;
+	pointer-events: none;
+}
+
+.bblock-wrapper .loading svg {
+	position: absolute;
+	z-index: 6;
+	right: 5px;
+	bottom: 5px;
+	width: 32px;
+	height: 32px;
+	animation: rotation 1s linear infinite;
+}
+
+.bblock-wrapper .tip {
+	pointer-events: none;
+	user-select: none;
+	position: absolute;
+	text-align: center;
+	margin: 0;
+	z-index: 4;
+	font-size: 15px;
+	color: #fafafa;
+	left: 50%;
+	top: 50%;
+	width: 90%;
+	opacity: 0;
+	transform: translate(-50%, -50%);
+	text-shadow:
+		0 0 5px #101010, 0 0 6px #bebebe;
+	transition: opacity 0.5s ease;
+}
+
+/* 播放状态 */
+.bblock-wrapper.state-playing {
+	--progress-width: 3.5px;
+}
+
+.bblock-wrapper.state-playing .cover {
+	opacity: 0;
+	pointer-events: none;
+	user-select: none;
+}
+
+.bblock-wrapper.state-playing .play {
+	opacity: 0;
+	height: 25px;
+	width: 25px;
+	top: 100%;
+	left: 100%;
+	transform: translate(-100%, -100%);
+	pointer-events: none;
+	user-select: none;
+}
+
+/* 
+音频错误状态 
+
+发生错误时强制回到封皮状态
+*/
+
+/* 错误和首次加载时隐藏播放按钮 */
+.bblock-wrapper.state-error .play,
+.bblock-wrapper.state-first-loading .play {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.bblock-wrapper.state-error .cover {
+	opacity: 1;
+	pointer-events: auto;
+	user-select: auto;
+}
+
+.bblock-wrapper.state-error:hover .reload {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+/* 错误和普通加载时覆盖暂停按钮的内联显隐样式 */
+
+.bblock-wrapper.state-error .pause,
+.bblock-wrapper.state-loading .pause {
+	opacity: 0 !important;
+	pointer-events: none !important;
+}
+
+/* 控件显示状态 */
+.bblock-wrapper.controls-show .controls {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+/* 两种加载状态共用显隐规则 */
+.bblock-wrapper.state-first-loading .loading,
+.bblock-wrapper.state-loading .loading {
+	opacity: 1;
+}
+
+/* 首次加载状态 */
+.bblock-wrapper.state-first-loading .loading {
+	background: rgba(255, 255, 255, 0.1);
+	background: rgb(255 255 255 / 10%);
+	-webkit-backdrop-filter: blur(5px);
+	backdrop-filter: blur(5px);
+	pointer-events: auto;
+	user-select: auto;
+}
+
+/* 普通音频加载状态 */
+.bblock-wrapper.state-loading .loading {
+	filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.7));
+}
