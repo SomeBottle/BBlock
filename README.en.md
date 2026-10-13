@@ -1,10 +1,10 @@
 # BBlock
 
-[ [中文版本](./README.md) ]  
+[ Lang: [简体中文](./README.md) | English ]  
 
 🎵 Wow~ you can really play! Square Music Player.
 
-> A lightweight, small music player—perfect for blogs and personal pages.
+> A lightweight, simple music player—perfect for blogs and personal pages.
 
 * [jsDelivr](https://www.jsdelivr.com/package/npm/bblock)  
 <!-- * [npmmirror](https://registry.npmmirror.com/bblock/latest/files)   -->

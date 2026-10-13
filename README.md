@@ -1,6 +1,6 @@
 # BBlock
 
-[ [English Version](./README.en.md) ]  
+[ Lang: 简体中文 | [English](./README.en.md) ]  
 
 🎵 Wow~ you can really play! Square Music Player.
 
