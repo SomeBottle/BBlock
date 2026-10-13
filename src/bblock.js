@@ -215,8 +215,11 @@ class BBlockPlayer {
 
 		// 最开始先进入加载状态
 		this._wrapperEl.classList.add('state-first-loading');
-
-		// 设置音频源 (src 肯定是有的)
+		
+		// 设置音频源 (src 肯定是要有的)
+		if(!this._config.src) {
+			throw new Error('Missing required config: src');
+		}
 		this._audioEl.src = this._config.src;
 
 		// 设置循环状态
