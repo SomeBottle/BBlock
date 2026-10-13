@@ -1,9 +1,15 @@
 {
   "name": "bblock",
   "version": "2.0.0",
-  "description": "Wow~you can really play! Square Music Player",
+  "description": "Wow~ you can really play! Square Music Player",
+  "main": "./dist/bblock.umd.js",
+  "module": "./dist/bblock.esm.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "node scripts/build.js",
+    "prepack": "npm run build",
     "test": "node --test scripts/hash-classes.test.js"
   },
   "repository": {
@@ -11,7 +17,9 @@
     "url": "git+https://github.com/SomeBottle/BBlock.git"
   },
   "keywords": [
+    "music",
     "player",
+    "music-player",
     "javascript"
   ],
   "author": "SomeBottle",
@@ -19,7 +27,7 @@
   "bugs": {
     "url": "https://github.com/SomeBottle/BBlock/issues"
   },
-  "homepage": "https://github.com/SomeBottle/BBlock#readme",
+  "homepage": "https://bblock.js.org",
   "devDependencies": {
     "acorn": "^8.19.0",
     "clean-css": "^5.3.3",
