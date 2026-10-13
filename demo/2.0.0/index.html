@@ -1,4 +1,4 @@
-<html>
+<html lang="zh-CN">
 
 <head>
 	<meta charset="utf-8" />
@@ -244,6 +244,36 @@
 			margin-top: 0;
 		}
 
+		.demo-language {
+			display: flex;
+			gap: 6px;
+			align-items: center;
+			margin-bottom: 12px;
+		}
+
+		.demo-language button {
+			border: 0;
+			padding: 0;
+			background: transparent;
+			color: inherit;
+			font: inherit;
+			cursor: pointer;
+		}
+
+		.demo-language button:hover,
+		.demo-language button[aria-pressed="true"] {
+			color: #2379bb;
+		}
+
+		.demo-language button[aria-pressed="true"] {
+			font-weight: 600;
+		}
+
+		.demo-language button:focus-visible {
+			outline: 2px solid #4a9fe3;
+			outline-offset: 2px;
+		}
+
 		@media (max-width: 600px) {
 			.demo-panel {
 				clear: both;
@@ -307,114 +337,232 @@
 				</bblock>
 			</div>
 			<div class="explanation">
-				<span class="label">兼容 v1.4.1 的构造方式 <code>bblock.s()</code></span>
+				<span class="label" data-i18n="legacyConstruction">兼容 v1.4.1 的构造方式 <code>bblock.s()</code></span>
 			</div>
 		</div>
 		<div class="group">
 			<div class="exhibition">
-				<div id="bblock-0"><button style="margin:10px;float:right;" id="bblock-0-btn">点击构造播放器</button></div>
-				<p>右方是《Vivy -Fluorite Eye's Song-》的开场动画主题曲，以下为作品简介： </p>
-				<p>WIT STUDIO×长月达平×梅原英司</p>
-				<p>Nialand，将梦想、希望和科学融为一体的，人工智能综合主题乐园。
+				<div id="bblock-0"><button style="margin:10px;float:right;" id="bblock-0-btn" data-i18n="createPlayer">点击构造播放器</button></div>
+				<p data-i18n="vivyIntro">右方是《Vivy -Fluorite Eye's Song-》的开场动画主题曲，以下为作品简介： </p>
+				<p data-i18n="vivyCredits">WIT STUDIO×长月达平×梅原英司</p>
+				<p data-i18n="vivyStory">Nialand，将梦想、希望和科学融为一体的，人工智能综合主题乐园。
 					作为历史上第一个自律学习型 AI，Vivy，该设施的 AI 歌姬，每天站在舞台上唱歌。但是，它目前的能力还不足以得到人气。
 					——其使命是「用歌声给大家带来幸福」
 					为了这个使命，vivy一直在园区的主舞台歌唱，探究什么是用心的唱歌。</p>
 
-				<p>某日，名为松本的AI出现在Vivy身边。
+				<p data-i18n="vivyMatsumoto">某日，名为松本的AI出现在Vivy身边。
 					松本自称“来自100年后的未来”，其使命是「与Vivy一起修正历史，并防止将在100年后发生的AI与人类的战争」。</p>
-				<p>执行着不同任务的2名AI，会把世界导向怎样的未来？
+				<p data-i18n="vivyJourney">执行着不同任务的2名AI，会把世界导向怎样的未来？
 					这是＜我（Vivy）＞将＜我（AI）＞毁灭的故事――
 					AI『歌姬』Vivy的百年旅程即将开始。</p>
 			</div>
 			<div class="explanation">
-				<span class="label">v2.0.0 的构造方式 <code>bblock.c(element, options)</code> 或
+				<span class="label" data-i18n="modernConstruction">v2.0.0 的构造方式 <code>bblock.c(element, options)</code> 或
 					<code>new BBlockPlayer(element, options)</code></span>
 			</div>
 		</div>
 		<div class="group">
 			<div class="exhibition interactive-exhibition">
 				<div id="bblock-1" class="demo-player demo-player-left"><button type="button"
-						id="bblock-1-btn">点击构造播放器</button></div>
+						id="bblock-1-btn" data-i18n="createPlayer">点击构造播放器</button></div>
 				<section class="demo-panel" aria-labelledby="events-heading">
-					<h2 id="events-heading">当前播放器事件计数</h2>
-					<p>点击左侧按钮构造播放器，再播放、暂停或展开拖拽面板。触发过的事件会变绿，标签上的数字是触发次数。</p>
-					<h3>原生音频事件</h3>
+					<h2 id="events-heading" data-i18n="eventsHeading">当前播放器事件计数</h2>
+					<p data-i18n="eventsIntro">点击左侧按钮构造播放器，再播放、暂停或展开拖拽面板。触发过的事件会变绿，标签上的数字是触发次数。</p>
+					<h3 data-i18n="nativeEvents">原生音频事件</h3>
 					<div id="native-event-counts" class="event-counts"></div>
-					<h3>播放器事件</h3>
+					<h3 data-i18n="playerEvents">播放器事件</h3>
 					<div id="custom-event-counts" class="event-counts"></div>
-					<div class="demo-row"><button type="button" id="reset-event-counts">清空计数</button></div>
-					<p id="events-status" class="demo-status" role="status">等待构造播放器。</p>
+					<div class="demo-row"><button type="button" id="reset-event-counts" data-i18n="resetCounts">清空计数</button></div>
+					<p id="events-status" class="demo-status" role="status" data-i18n="waitingForPlayer">等待构造播放器。</p>
 				</section>
 			</div>
 			<div class="explanation">
-				<span class="label">事件监听 <code>player.on(event, callback)</code></span>
+				<span class="label" data-i18n="eventListening">事件监听 <code>player.on(event, callback)</code></span>
 			</div>
 		</div>
 		<div class="group">
 			<div class="exhibition interactive-exhibition">
 				<div id="bblock-2" class="demo-player demo-player-right"><button type="button"
-						id="bblock-2-btn">点击构造播放器</button></div>
+						id="bblock-2-btn" data-i18n="createPlayer">点击构造播放器</button></div>
 				<section class="demo-panel" aria-labelledby="api-heading">
-					<h2 id="api-heading">方法与属性</h2>
-					<p>点击右侧按钮构造播放器，使用下面的公开 API 操作它。</p>
+					<h2 id="api-heading" data-i18n="apiHeading">方法与属性</h2>
+					<p data-i18n="apiIntro">点击右侧按钮构造播放器，使用下面的公开 API 操作它。</p>
 					<fieldset id="api-controls" disabled>
 						<div class="demo-row">
 							<button type="button" data-api-action="play">play()</button>
 							<button type="button" data-api-action="pause">pause()</button>
 							<label><input id="api-loop" type="checkbox">loop</label>
-							<button type="button" data-api-action="audio">读取 audioElement</button>
+							<button type="button" data-api-action="audio" data-i18n="readAudio">读取 audioElement</button>
 						</div>
 						<div class="demo-row">
 							<label for="api-volume">volume =</label><input id="api-volume" type="number" step="0.1"
 								value="0.7">
-							<button type="button" data-api-action="volume">设置音量</button>
-							<label for="api-volume-slider">音量</label><input id="api-volume-slider" type="range" min="0"
+							<button type="button" data-api-action="volume" data-i18n="setVolume">设置音量</button>
+							<label for="api-volume-slider" data-i18n="volume">音量</label><input id="api-volume-slider" type="range" min="0"
 								max="1" step="0.01" value="0.7">
 						</div>
 						<div class="demo-row">
-							<label for="api-seek">seek(秒)</label><input id="api-seek" type="number" step="0.1"
+							<label for="api-seek" data-i18n="seekSeconds">seek(秒)</label><input id="api-seek" type="number" step="0.1"
 								value="5">
-							<button type="button" data-api-action="seek">跳转</button>
-							<label for="api-seek-slider">进度</label><input id="api-seek-slider" type="range" min="0"
+							<button type="button" data-api-action="seek" data-i18n="seek">跳转</button>
+							<label for="api-seek-slider" data-i18n="progress">进度</label><input id="api-seek-slider" type="range" min="0"
 								max="1" step="0.001" value="0" disabled>
 						</div>
 						<div class="demo-row">
 							<label for="api-progress-color">progressColor =</label><input id="api-progress-color"
 								type="text" value="#6ebcff">
-							<button type="button" data-api-action="color">设置颜色</button>
+							<button type="button" data-api-action="color" data-i18n="setColor">设置颜色</button>
 							<label for="api-progress-opacity">progressOpacity</label><input id="api-progress-opacity"
 								type="range" min="0" max="1" step="0.01" value="0.6">
 						</div>
 						<div class="demo-row">
 							<label for="api-reload-title">title =</label><input id="api-reload-title" type="text"
-								value="重载后的播放器">
+								value="重载后的播放器" data-i18n-value="reloadedTitle">
 							<button type="button" data-api-action="reload">reload({ title })</button>
 							<button type="button" data-api-action="destroy">destroy()</button>
-							<button type="button" data-api-action="recreate">重建 / 恢复原配置</button>
+							<button type="button" data-api-action="recreate" data-i18n="recreate">重建 / 恢复原配置</button>
 						</div>
 						<div class="demo-row">
-							<label for="api-event">事件</label><select id="api-event"></select>
+							<label for="api-event" data-i18n="event">事件</label><select id="api-event"></select>
 							<button type="button" data-api-action="on">on(event, callback)</button>
 							<button type="button" data-api-action="off">off(event, callback)</button>
 							<button type="button" data-api-action="off-all">offAll()</button>
 						</div>
 					</fieldset>
-					<p id="api-listener-status">回调：0 次 · 未注册</p>
-					<pre id="api-state" class="demo-state">等待构造播放器。</pre>
-					<p id="api-status" class="demo-status" role="status">构造后即可操作，音量与透明度范围为 0～1，seek 单位为秒。</p>
+					<p id="api-listener-status" data-i18n="initialListenerStatus">回调：0 次 · 未注册</p>
+					<pre id="api-state" class="demo-state" data-i18n="waitingForPlayer">等待构造播放器。</pre>
+					<p id="api-status" class="demo-status" role="status" data-i18n="apiHint">构造后即可操作，音量与透明度范围为 0～1，seek 单位为秒。</p>
 				</section>
 			</div>
 			<div class="explanation">
-				<span class="label">播放器公开 API</span>
+				<span class="label" data-i18n="publicApi">播放器公开 API</span>
 			</div>
 		</div>
-		<div class="empty" style="height: 100px;background: transparent;"></div>
+		<div class="empty" style="height: 140px;background: transparent;"></div>
 	</div>
 	<div class="demo-footer">
 		<p style='color: rgb(86, 86, 86);'>BBlock v2.0.0</p>
+		<div class="demo-language" role="group" aria-label="语言">
+			<button type="button" data-language="zh" lang="zh-CN" aria-pressed="true">中文</button>
+			<span aria-hidden="true">|</span>
+			<button type="button" data-language="en" lang="en-US" aria-pressed="false">English</button>
+		</div>
 		<iframe src="https://ghbtns.com/github-btn.html?user=SomeBottle&repo=BBlock&type=star&count=true&size=large"
 			frameborder="0" scrolling="0" width="120px" height="30px"></iframe>
 	</div>
+	<script>
+		const demoUrl = new URL(window.location.href);
+		let demoLanguage = demoUrl.searchParams.get('lang');
+		try {
+			if (!demoLanguage) demoLanguage = localStorage.getItem('bblock-demo-language');
+		} catch (error) { /* 本地存储不可用时仍可通过 URL 切换语言。 */ }
+		demoLanguage = demoLanguage === 'en' ? 'en' : 'zh';
+		const demoPlayerLanguage = demoLanguage === 'en' ? 'en-US' : 'zh-CN';
+		const demoMessages = {
+			zh: {
+				reloadedTitle: '重载后的播放器',
+				missingAudio: '不存在的音频',
+				missingAudioArtist: '其实下面能听',
+				eventsRegistered: '已通过 player.on() 注册事件监听。',
+				audioLoadError: '音频加载失败，error 事件已记录，可点击播放器重试。',
+				latestEvent: '最近事件：{event}',
+				constructionError: '构造失败：{message}',
+				listenerStatus: '回调：{count} 次 · {listener}（reload / destroy 会清除监听）',
+				listening: '已监听 {event}',
+				notRegistered: '未注册',
+				noError: '无',
+				invalidNumber: '请输入有效数值。',
+				cannotSeek: '音频尚未加载完成，暂时无法跳转。',
+				audioMismatch: 'audioElement 与播放器中的音频元素不一致。',
+				playerCreated: '播放器已构造，可以开始操作。',
+				audioRead: 'audioElement 是播放器中的 HTMLAudioElement，状态见上方。',
+				actionCalled: '已调用 {action}。',
+				propertySet: '已设置 {property}。'
+			},
+			en: {
+				legacyConstruction: 'Compatible with the v1.4.1 method <code>bblock.s()</code>',
+				createPlayer: 'Create player',
+				vivyIntro: "The player on the right features the opening theme from Vivy -Fluorite Eye's Song-. Here is an introduction to the series:",
+				vivyCredits: 'WIT STUDIO × Tappei Nagatsuki × Eiji Umehara',
+				vivyStory: 'Nialand is an AI theme park that brings together dreams, hope, and science. Vivy, the first autonomous learning AI in history, performs there as an AI singer every day, but has yet to win an audience. Her mission is to make everyone happy through song. To fulfill it, she keeps singing on the main stage and exploring what it means to sing from the heart.',
+				vivyMatsumoto: 'One day, an AI named Matsumoto appears before Vivy. He claims to have come from 100 years in the future, with a mission to work with Vivy to change history and prevent a war between AI and humanity that will break out in 100 years.',
+				vivyJourney: 'What future will these two AIs, each with a different mission, lead the world toward? This is the story of how I (Vivy) will destroy myself (AI). The AI songstress Vivy is about to begin a century-long journey.',
+				modernConstruction: 'v2.0.0 constructors: <code>bblock.c(element, options)</code> or <code>new BBlockPlayer(element, options)</code>',
+				eventsHeading: 'Current player event counts',
+				eventsIntro: 'Create a player using the button on the left, then play, pause, or open the drag panel. Events turn green when triggered, and each badge shows the number of times the event has fired.',
+				nativeEvents: 'Native audio events',
+				playerEvents: 'Player events',
+				resetCounts: 'Reset counts',
+				waitingForPlayer: 'Waiting for a player to be created.',
+				eventListening: 'Event listeners: <code>player.on(event, callback)</code>',
+				apiHeading: 'Methods and properties',
+				apiIntro: 'Create a player using the button on the right, then use the public API below to control it.',
+				readAudio: 'Read audioElement',
+				setVolume: 'Set volume',
+				volume: 'Volume',
+				seekSeconds: 'seek(seconds)',
+				seek: 'Seek',
+				progress: 'Progress',
+				setColor: 'Set color',
+				reloadedTitle: 'Reloaded player',
+				recreate: 'Recreate / restore original settings',
+				event: 'Event',
+				initialListenerStatus: 'Callbacks: 0 · Not registered',
+				apiHint: 'Controls are available after creating a player. Volume and opacity range from 0 to 1; seek uses seconds.',
+				publicApi: 'Public player API',
+				missingAudio: 'Missing audio',
+				missingAudioArtist: 'The player below works',
+				eventsRegistered: 'Event listeners registered with player.on().',
+				audioLoadError: 'Audio failed to load. The error event was recorded; click the player to retry.',
+				latestEvent: 'Latest event: {event}',
+				constructionError: 'Failed to create player: {message}',
+				listenerStatus: 'Callbacks: {count} · {listener} (reload / destroy clears listeners)',
+				listening: 'Listening to {event}',
+				notRegistered: 'Not registered',
+				noError: 'None',
+				invalidNumber: 'Please enter a valid number.',
+				cannotSeek: 'Audio has not finished loading; seeking is unavailable.',
+				audioMismatch: 'audioElement does not match the audio element inside the player.',
+				playerCreated: 'Player created. Controls are ready.',
+				audioRead: 'audioElement is the HTMLAudioElement inside the player. Its state is shown above.',
+				actionCalled: 'Called {action}.',
+				propertySet: 'Set {property}.'
+			}
+		};
+		function demoT(key, values = {}) {
+			return demoMessages[demoLanguage][key].replace(/\{(\w+)\}/g, (match, name) => values[name] ?? match);
+		}
+		document.documentElement.lang = demoPlayerLanguage;
+		for (const element of document.querySelectorAll('[data-i18n]')) {
+			const key = element.dataset.i18n;
+			demoMessages.zh[key] = element.innerHTML;
+			if (demoLanguage === 'en') element.innerHTML = demoT(key);
+		}
+		for (const element of document.querySelectorAll('[data-i18n-value]')) {
+			element.value = demoT(element.dataset.i18nValue);
+		}
+		document.querySelector('.demo-language').setAttribute('aria-label', demoLanguage === 'en' ? 'Language' : '语言');
+		for (const button of document.querySelectorAll('[data-language]')) {
+			button.setAttribute('aria-pressed', String(button.dataset.language === demoLanguage));
+			button.addEventListener('click', () => {
+				const language = button.dataset.language;
+				if (language === demoLanguage) return;
+				try { localStorage.setItem('bblock-demo-language', language); } catch (error) {}
+				demoUrl.searchParams.set('lang', language);
+				window.location.assign(demoUrl.href);
+			});
+		}
+		// 在 UMD 脚本自动构造旧版播放器之前设置语言。
+		for (const element of document.querySelectorAll('bblock')) {
+			const options = JSON.parse(element.textContent);
+			options.language = demoPlayerLanguage;
+			if (options.title === '不存在的音频') {
+				options.title = demoT('missingAudio');
+				options.artist = demoT('missingAudioArtist');
+			}
+			element.textContent = JSON.stringify(options);
+		}
+	</script>
 	<script src="./bblock.umd.js"></script>
 	<script>
 		// group 2
@@ -422,6 +570,7 @@
 		bblock0Btn.addEventListener('click', () => {
 			const bblock0 = document.getElementById('bblock-0');
 			const bblock0Player = new BBlockPlayer(bblock0, {
+				language: demoPlayerLanguage,
 				src: "https://mc-sounds-static-v3.imbottle.com/bblock/sing_my_pleasure.mp3",
 				cover: "https://p1.music.126.net/N5MGemr22IcT5GSHKhjDuA==/109951165870860904.jpg",
 				title: "Sing My Pleasure",
@@ -460,13 +609,14 @@
 				if (!event.target.closest('#bblock-1-btn')) return;
 				try {
 					const player = new BBlockPlayer(host, {
+						language: demoPlayerLanguage,
 						src: 'https://mc-sounds-static-v3.imbottle.com/bblock/run_in_the_wind.mp3',
 						cover: 'https://p2.music.126.net/YpNo_-lbxL-xZNtzD6SgrQ==/109951173945957793.jpg',
 						title: '風の中は走るっきゃないっ！', artist: '三月のパンタシア', loop: false, float: 'left', volume: 0.7
 					});
 					window.bblock1Player = player;
 					status.dataset.error = 'false';
-					status.textContent = '已通过 player.on() 注册事件监听。';
+					status.textContent = demoT('eventsRegistered');
 					for (const [name, badge] of badges) {
 						player.on(name, () => {
 							const count = counts.get(name) + 1;
@@ -474,12 +624,12 @@
 							badge.dataset.seen = 'true';
 							badge.textContent = `${name}: ${count}`;
 							status.dataset.error = String(name === 'error');
-							status.textContent = name === 'error' ? '音频加载失败，error 事件已记录，可点击播放器重试。' : `最近事件：${name}`;
+							status.textContent = name === 'error' ? demoT('audioLoadError') : demoT('latestEvent', { event: name });
 						});
 					}
 				} catch (error) {
 					status.dataset.error = 'true';
-					status.textContent = `构造失败：${error.message}`;
+					status.textContent = demoT('constructionError', { message: error.message });
 				}
 			});
 			document.getElementById('reset-event-counts').addEventListener('click', () => {
@@ -498,6 +648,7 @@
 			const host = $('bblock-2');
 			const controls = $('api-controls');
 			const config = {
+				language: demoPlayerLanguage,
 				src: 'https://music.163.com/song/media/outer/url?id=1973073307',
 				cover: 'https://p2.music.126.net/7SHwGFgaL5LbB7BJQmLzZw==/109951167790191677.jpg',
 				title: '目醒め', artist: '川﨑龍', loop: false, float: 'right', volume: 1
@@ -526,7 +677,10 @@
 				$('api-volume-slider').value = player.volume;
 				$('api-seek-slider').value = hasDuration ? player.currentTime / audio.duration : 0;
 				if (!player.destroyed) $('api-progress-opacity').value = player.progressOpacity;
-				$('api-listener-status').textContent = `回调：${callbackCount} 次 · ${registeredEvent ? `已监听 ${registeredEvent}` : '未注册'}（reload / destroy 会清除监听）`;
+				$('api-listener-status').textContent = demoT('listenerStatus', {
+					count: callbackCount,
+					listener: registeredEvent ? demoT('listening', { event: registeredEvent }) : demoT('notRegistered')
+				});
 				$('api-state').textContent = [
 					`id: ${player.id}    destroyed: ${player.destroyed}`,
 					`volume: ${number(player.volume)}    loop: ${player.loop}`,
@@ -535,7 +689,7 @@
 					`audioElement: ${audio.constructor.name}    paused: ${audio.paused}    ended: ${audio.ended}`,
 					`bblock.get(id) === player: ${bblock.get(player.id) === player}`,
 					`bblock.currentPlayers: [${bblock.currentPlayers.map(([id]) => id).join(', ')}]`,
-					`error: ${audio.error ? audio.error.code + ' / ' + audio.error.message : '无'}`
+					`error: ${audio.error ? audio.error.code + ' / ' + audio.error.message : demoT('noError')}`
 				].join('\n');
 			}
 
@@ -560,12 +714,12 @@
 
 			function inputNumber(id) {
 				const value = $(id).valueAsNumber;
-				if (!Number.isFinite(value)) throw new Error('请输入有效数值。');
+				if (!Number.isFinite(value)) throw new Error(demoT('invalidNumber'));
 				return value;
 			}
 
 			function seek(value) {
-				if (!Number.isFinite(player.audioElement.duration)) throw new Error('音频尚未加载完成，暂时无法跳转。');
+				if (!Number.isFinite(player.audioElement.duration)) throw new Error(demoT('cannotSeek'));
 				player.seek(value);
 			}
 
@@ -574,7 +728,7 @@
 				pause: () => player.pause(),
 				audio: () => {
 					const audio = player.audioElement;
-					if (!(audio instanceof HTMLAudioElement) || audio !== host.querySelector('audio')) throw new Error('audioElement 与播放器中的音频元素不一致。');
+					if (!(audio instanceof HTMLAudioElement) || audio !== host.querySelector('audio')) throw new Error(demoT('audioMismatch'));
 				},
 				volume: () => { player.volume = inputNumber('api-volume'); },
 				seek: () => seek(inputNumber('api-seek')),
@@ -596,19 +750,19 @@
 				'off-all': () => { player.offAll(); registeredEvent = null; }
 			};
 			host.addEventListener('click', (event) => {
-				if (event.target.closest('#bblock-2-btn') && (!player || player.destroyed)) run(createPlayer, '播放器已构造，可以开始操作。');
+				if (event.target.closest('#bblock-2-btn') && (!player || player.destroyed)) run(createPlayer, demoT('playerCreated'));
 			});
 			controls.addEventListener('click', (event) => {
 				const button = event.target.closest('[data-api-action]');
-				if (button && !button.disabled && !controls.disabled) run(actions[button.dataset.apiAction], button.dataset.apiAction === 'audio' ? 'audioElement 是播放器中的 HTMLAudioElement，状态见上方。' : `已调用 ${button.textContent}。`);
+				if (button && !button.disabled && !controls.disabled) run(actions[button.dataset.apiAction], button.dataset.apiAction === 'audio' ? demoT('audioRead') : demoT('actionCalled', { action: button.textContent }));
 			});
-			$('api-loop').addEventListener('change', () => run(() => { player.loop = $('api-loop').checked; }, '已设置 loop。'));
+			$('api-loop').addEventListener('change', () => run(() => { player.loop = $('api-loop').checked; }, demoT('propertySet', { property: 'loop' })));
 			$('api-volume-slider').addEventListener('input', () => run(() => {
 				player.volume = Number($('api-volume-slider').value);
 				$('api-volume').value = player.volume;
-			}, '已设置 volume。'));
-			$('api-seek-slider').addEventListener('input', () => run(() => seek(Number($('api-seek-slider').value) * player.audioElement.duration), '已调用 seek()。'));
-			$('api-progress-opacity').addEventListener('input', () => run(() => { player.progressOpacity = Number($('api-progress-opacity').value); }, '已设置 progressOpacity。'));
+			}, demoT('propertySet', { property: 'volume' })));
+			$('api-seek-slider').addEventListener('input', () => run(() => seek(Number($('api-seek-slider').value) * player.audioElement.duration), demoT('actionCalled', { action: 'seek()' })));
+			$('api-progress-opacity').addEventListener('input', () => run(() => { player.progressOpacity = Number($('api-progress-opacity').value); }, demoT('propertySet', { property: 'progressOpacity' })));
 			$('api-event').addEventListener('change', () => {
 				if (registeredEvent) player.off(registeredEvent, callback);
 				registeredEvent = null; callbackCount = 0; renderState();
