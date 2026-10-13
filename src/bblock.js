@@ -215,9 +215,9 @@ class BBlockPlayer {
 
 		// 最开始先进入加载状态
 		this._wrapperEl.classList.add('state-first-loading');
-		
+
 		// 设置音频源 (src 肯定是要有的)
-		if(!this._config.src) {
+		if (!this._config.src) {
 			throw new Error('Missing required config: src');
 		}
 		this._audioEl.src = this._config.src;
@@ -230,7 +230,7 @@ class BBlockPlayer {
 		}
 
 		// 设置音量
-		if (this._config.volume) {
+		if (this._config.volume || this._config.volume === 0) {
 			this.volume = this._config.volume;
 		}
 
@@ -238,7 +238,7 @@ class BBlockPlayer {
 		if (this._config.progressColor) {
 			this.progressColor = this._config.progressColor;
 		}
-		if (this._config.progressOpacity) {
+		if (this._config.progressOpacity || this._config.progressOpacity === 0) {
 			this.progressOpacity = this._config.progressOpacity;
 		}
 
