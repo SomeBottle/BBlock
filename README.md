@@ -70,17 +70,17 @@ const player = bblock.c(element, config);
 
 |键|值|备注|
 |-----|-----|-----|
-|src|音乐的 URL|必需|
+|src|音乐的 URL|**必需**|
 |cover|音乐封面的 URL|非必需|
 |title|音乐标题|非必需|
 |artist|音乐创作者|非必需|
-|volume|音量|取值范围为 0~1，非必需，默认是 1；传入 0 时按默认值处理|
-|time|刚开始播放的时间点|以秒为单位，非必需，默认从 0 秒开始|
-|loop|是否循环播放|可取布尔值 `true`/`false` 或字符串 `"true"`/`"false"`，非必需，默认不循环|
-|float|CSS 的 `float` 样式|非必需，默认是 `none`|
-|language|界面语言|可取 `zh-CN`、`zh-TW` 或 `en-US`，非必需，默认是 `zh-CN`|
-|progressColor|进度条颜色|CSS 颜色值或 `none`，非必需，默认是 `none`|
-|progressOpacity|进度条透明度|取值范围为 0~1，非必需，默认是 0.6；传入 0 时按默认值处理|
+|volume|音量|非必需。取值范围为 0~1，默认是 1|
+|time|刚开始播放的时间点|非必需。以秒为单位，默认从 0 秒开始|
+|loop|是否循环播放|非必需。可取布尔值 `true` / `false`，默认不循环|
+|float|CSS 的 `float` 样式，控制播放器放置位置|非必需。默认是 `none`|
+|language|界面语言|非必需。可取 `zh-CN`、`zh-TW` 或 `en-US`，默认是 `zh-CN`|
+|progressColor|进度条颜色|非必需。CSS 颜色值或 `none`，默认是 `none`，即自适应颜色|
+|progressOpacity|进度条透明度|非必需。取值范围为 0~1，默认是 0.6|
 
 ### 浏览器使用示例
 
@@ -103,6 +103,10 @@ const player = new BBlockPlayer(
    }
 )
 ```
+
+### 作为模块导入使用
+
+
    
 ## 进度调节与音量调节
 
