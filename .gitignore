@@ -1,5 +1,4 @@
 test.html
 node_modules/
-dist/
 *.old.js
 *.old.css
