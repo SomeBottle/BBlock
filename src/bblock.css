@@ -315,6 +315,7 @@
 .bblock-wrapper .title-wrapper {
 	position: absolute;
 	z-index: 3;
+	box-sizing: border-box;
 	text-align: left;
 	left: 0;
 	width: 100%;
