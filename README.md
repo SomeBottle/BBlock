@@ -1,8 +1,14 @@
 # BBlock
 
+[ [English Version](./README.en.md) ]  
+
 🎵 Wow~ you can really play! Square Music Player.
 
 > 轻量小巧的音乐播放器，乃博客、个人页面常备神器。
+
+* [jsDelivr](https://www.jsdelivr.com/package/npm/bblock)  
+<!-- * [npmmirror](https://registry.npmmirror.com/bblock/latest/files)   -->
+* [npm](https://www.npmjs.com/package/bblock)  
 
 ## Demo  
 
@@ -58,7 +64,7 @@
    
 </details>
 
-BBlock v2.x.x 在兼容 v1.x.x 的构造方式的前提下新增了实例化构造方式：  
+BBlock v2.x.x **在兼容 v1.x.x 的构造方式的前提下**新增了实例化构造方式：  
 
 ```javascript
 const player = new BBlockPlayer(element, config);
@@ -70,23 +76,23 @@ const player = bblock.c(element, config);
 
 |键|值|备注|
 |-----|-----|-----|
-|src|音乐的 URL|**必需**|
-|cover|音乐封面的 URL|非必需|
-|title|音乐标题|非必需|
-|artist|音乐创作者|非必需|
-|volume|音量|非必需。取值范围为 0~1，默认是 1|
-|time|刚开始播放的时间点|非必需。以秒为单位，默认从 0 秒开始|
-|loop|是否循环播放|非必需。可取布尔值 `true` / `false`，默认不循环|
-|float|CSS 的 `float` 样式，控制播放器放置位置|非必需。默认是 `none`|
-|language|界面语言|非必需。可取 `zh-CN`、`zh-TW` 或 `en-US`，默认是 `zh-CN`|
-|progressColor|进度条颜色|非必需。CSS 颜色值或 `none`，默认是 `none`，即自适应颜色|
-|progressOpacity|进度条透明度|非必需。取值范围为 0~1，默认是 0.6|
+|`src`|音乐的 URL|**必需**|
+|`cover`|音乐封面的 URL|非必需|
+|`title`|音乐标题|非必需|
+|`artist`|音乐创作者|非必需|
+|`volume`|音量|非必需。取值范围为 0~1，默认是 1|
+|`time`|刚开始播放的时间点|非必需。以秒为单位，默认从 0 秒开始|
+|`loop`|是否循环播放|非必需。可取布尔值 `true` / `false`，默认不循环|
+|`float`|CSS 的 `float` 样式，控制播放器放置位置|非必需。默认是 `none`|
+|`language`|界面语言|非必需。可取 `zh-CN`、`zh-TW` 或 `en-US`，默认是 `zh-CN`|
+|`progressColor`|进度条颜色|非必需。CSS 颜色值或 `none`，默认是 `none`，即自适应颜色|
+|`progressOpacity`|进度条透明度|非必需。取值范围为 0~1，默认是 0.6|
 
-### 示例: 浏览器使用
+### 快速入门: 浏览器使用
 
 ```html
 <div id="my-player"></div>
-<script src="bblock.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bblock@latest/dist/bblock.umd.js"></script>
 ```
 
 ```javascript
@@ -104,10 +110,16 @@ const player = new BBlockPlayer(
 )
 ```
 
-### 示例: 作为模块导入使用
+### 作为模块导入使用
+
+```bash
+# 安装 bblock 包
+npm install bblock
+```
 
 ```javascript
-import bblock, { BBlockPlayer } from 'bblock.esm.js';
+// import bblock, { BBlockPlayer } from 'bblock.esm.js';
+import bblock, { BBlockPlayer } from 'bblock';
 
 const element = document.getElementById('my-player');
 const config = {
@@ -143,6 +155,10 @@ const player = new BBlockPlayer(element, config);
 ## 播放器 API
 
 v2.x.x 的 `BBlockPlayer` 实例提供了一些 API 及可读写属性，下面说明以上方示例中创建的 `player` 为例。  
+
+<details>
+
+<summary>展开查看</summary>
 
 ### 方法
 
@@ -181,15 +197,21 @@ v2.x.x 的 `BBlockPlayer` 实例提供了一些 API 及可读写属性，下面�
 |`bblock.get(id)`|根据 ID 获取当前播放器实例，不存在时返回 `null`|
 |`bblock.currentPlayers`|获取当前页面中所有**存在的**播放器，返回由 `[id, player]` 组成的数组|
 
-注：播放器元素从当前 DOM 中移除时会自动触发销毁 (`destroy()`)。  
+**注**：播放器元素从当前 DOM 中移除时会自动触发销毁 (`destroy()`)。  
+
+</details>
 
 ## 事件绑定
 
 可使用 `player.on(eventName, callback)` 绑定播放器事件，同一事件可以注册多个回调，但同一个函数引用重复注册只会保留一份。事件名称使用小写。
 
+<details>
+
+<summary>展开查看支持的事件</summary>
+
 ### 原生音频事件
 
-诸如 `play`, `canplay`, `timeupdate` 一类的原生音频事件如果用 `player.on` 绑定，会直接透传绑定到底层的 `<audio>` 元素上。
+诸如 `play`, `canplay`, `timeupdate` 一类的原生音频事件如果用 `player.on` 绑定，会直接透传绑定到底层的 `<audio>` 元素上。和直接在 `player.audioElement` 上用 `addEventListener` 绑定事件不同，用 `player.on` 绑定的事件会被自动管理，默认情况下生命周期和播放器生命周期一致。
 
 ### 播放器事件
 
@@ -206,6 +228,24 @@ v2.x.x 的 `BBlockPlayer` 实例提供了一些 API 及可读写属性，下面�
 |`tipshow`|`(message, duration)`|提示开始显示时。回调参数分别为提示文本和显示时长（毫秒）|
 |`tiphide`|`(message, duration)`|提示开始隐藏时。回调参数与 `tipshow` 相同|
 |`destroy`|无|播放器销毁前产生，另外调用 `reload()` 时也会触发|
+
+</details>
+
+## 手动构建
+
+```bash
+npm install
+npm run build
+```
+
+构建产物会输出到 `./dist` 目录下：  
+
+```text
+dist/
+├── bblock.classes.json
+├── bblock.esm.js
+└── bblock.umd.js
+```
 
 ## 感谢  
 
