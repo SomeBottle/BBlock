@@ -1,6 +1,6 @@
 # BBlock
 
-![GitHub Stars](https://shieldcn.dev/github/stars/SomeBottle/BBlock.svg?variant=outline&mode=light)  
+[![GitHub Stars](https://shieldcn.dev/github/stars/SomeBottle/BBlock.svg?variant=outline&mode=light)](https://github.com/SomeBottle/BBlock)  
 
 [ Lang: [简体中文](./README.md) | English ]  
 
