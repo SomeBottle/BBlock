@@ -321,6 +321,7 @@ class BBlockPlayer {
 		this._controlsEl.addEventListener('dragstart', this._dragStartHandler.bind(this), { signal });
 		window.addEventListener('mousemove', BBlockPlayer.throttle(this._windowMouseMoveHandler.bind(this), 100), { signal });
 		window.addEventListener('mouseup', this._windowMouseUpHandler.bind(this), { signal });
+		window.addEventListener('selectstart', this._windowSelectStartHandler.bind(this), { signal });
 		// 注册到全局播放器列表中
 		bblock._currentPlayers[this.id] = this;
 		// 启动 Observer 监听播放器元素是否被移除
@@ -331,6 +332,17 @@ class BBlockPlayer {
 			}
 		});
 		this._elObserver.observe(document.body, { childList: true, subtree: true });
+	}
+
+	/**
+	 * 鼠标开始选择时的处理函数  
+	 * 主要是为了防止在拖拽控制条时，鼠标选择文本
+	 * @param {Event} e 事件
+	 */
+	_windowSelectStartHandler(e) {
+		if (this._barDragging) {
+			e.preventDefault();
+		}
 	}
 
 	/**
@@ -541,6 +553,7 @@ class BBlockPlayer {
 	 */
 	_volumeIconMouseDownHandler(e) {
 		if (!this._volumeIconEl.contains(e.target)) return;
+		e.preventDefault();
 		// 如果是启动了音量控制就激发事件
 		if (!this._volumeControlling) {
 			this._emitEvent('volumecontrolstart');
@@ -560,6 +573,7 @@ class BBlockPlayer {
 	 */
 	_progressIconMouseDownHandler(e) {
 		if (!this._progressIconEl.contains(e.target)) return;
+		e.preventDefault();
 		const progress = this._getProgressPercent();
 		if (progress === null) return;
 		// 如果是启动了进度控制就激发事件
@@ -582,6 +596,7 @@ class BBlockPlayer {
 	_controlsMouseDownHandler(e) {
 		if (!this._wrapperEl.contains(e.target)) return;
 		if (!this._volumeControlling && !this._progressControlling) return;
+		e.preventDefault();
 		e.stopPropagation();
 		this._barDragging = true;
 		// 开始拖拽时重置一下鼠标位置，避免拖拽时出现跳跃
@@ -613,6 +628,7 @@ class BBlockPlayer {
 			}
 			return;
 		}
+		e.preventDefault(); // 阻止默认行为（如果已经在拖拽过程中），避免移动端拖动时发生页面滚动等问题
 		let deltaX = clientX - this._previousMousePos.x;
 		if (this._volumeControlling) {
 			// 音量调节
