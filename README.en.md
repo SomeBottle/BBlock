@@ -1,5 +1,7 @@
 # BBlock
 
+[![GitHub Repo stars](https://img.shields.io/github/stars/SomeBottle/BBlock)](https://github.com/SomeBottle/BBlock)  
+
 [ Lang: [简体中文](./README.md) | English ]  
 
 🎵 Wow~ you can really play! Square Music Player.
@@ -16,11 +18,11 @@
 
 [bblock.js.org/demo](https://bblock.js.org/demo)  
 
-## Let's Use It!
+## 1. Let's Use It!
 
 <details>
 
-<summary>Expand for v1.x.x setup instructions</summary>
+<summary>Expand for <code>v1.x.x</code> setup instructions</summary>
 
 1. Include `bblock.(m.).css` in the page head, and include `bblock.(m.).js` after all `<bblock></bblock>` tags.
 2. Add a tag like this to your HTML:
@@ -62,7 +64,7 @@
 
 </details>
 
-BBlock v2.x.x introduces a new API for creating player instances while **maintaining backward compatibility with the v1.x.x `bblock.s()` method**:  
+BBlock `v2.x.x` introduces a new API for creating player instances while **maintaining backward compatibility with the `v1.x.x` `bblock.s()` method**:  
 
 ```javascript
 const player = new BBlockPlayer(element, config);
@@ -86,7 +88,7 @@ Here, `element` is an HTML element object, and `config` is a configuration objec
 |`progressColor`|Progress bar color|Optional. A CSS color value or `none`. Default: `none` (background-adaptive color)|
 |`progressOpacity`|Progress bar opacity|Optional. Range: 0–1. Default: 0.6|
 
-### Quick Start: Browser Usage
+### 1.1. Quick Start: Browser Usage
 
 ```html
 <div id="my-player"></div>
@@ -108,7 +110,7 @@ const player = new BBlockPlayer(
 )
 ```
 
-### Using Module Imports
+### 1.2. Using Module Imports
 
 ```bash
 # Install the bblock package
@@ -130,18 +132,18 @@ const player = new BBlockPlayer(element, config);
 // You can also create an instance with bblock.c(element, config)
 ```
 
-## Playback Controls and Volume Controls
+## 2. Playback Controls and Volume Controls
 
 Despite being tiny, it still has playback controls and volume controls. (;ﾟ∀ﾟ)
 
-For older versions (<= v1.4.1):
+For older versions (<= `v1.4.1`):
 
 * Hover over the player to reveal two equal-sized blocks, one blue and one purple.
 * Drag the blue block on the left to adjust the playback position.
 * Drag the purple block on the right to adjust the volume.
 * Click either block to see the current playback position or volume, respectively.
 
-For v2.x.x:
+For `v2.x.x`:
 
 * After playback starts, hover over the square to reveal the controls:
 
@@ -150,15 +152,15 @@ For v2.x.x:
 * Drag the volume icon on the left to enter volume adjustment mode, or drag the icon on the right to enter playback position adjustment mode.
 * The controls hide immediately when the pointer leaves the player. They also hide automatically after a few seconds if the pointer stays still over the player.  
 
-## Player API
+## 3. Player API
 
-In v2.x.x, each `BBlockPlayer` instance provides methods and properties, including writable properties. The descriptions below use the `player` instance created in the example above.
+In `v2.x.x`, each `BBlockPlayer` instance provides methods and properties, including writable properties. The descriptions below use the `player` instance created in the example above.
 
 <details>
 
 <summary>Expand to view</summary>
 
-### Methods
+### 3.1. Methods
 
 |Method|Description|
 |-----|-----|
@@ -171,7 +173,7 @@ In v2.x.x, each `BBlockPlayer` instance provides methods and properties, includi
 |`player.off(eventName, callback)`|Remove a callback for the specified event. Pass the same function reference used when registering it|
 |`player.offAll()`|Remove all event listeners registered through `player.on()`|
 
-### Properties
+### 3.2. Properties
 
 |Property|Access|Description|
 |-----|-----|-----|
@@ -184,9 +186,9 @@ In v2.x.x, each `BBlockPlayer` instance provides methods and properties, includi
 |`player.id`|Read-only|The player's unique ID, as a string|
 |`player.destroyed`|Read-only|Whether the player has been destroyed|
 
-### Global Instance Management
+### 3.3. Global Instance Management
 
-The global `bblock` object is retained for compatibility with v1.x.x.
+The global `bblock` object is retained for compatibility with `v1.x.x`.
 
 |API|Description|
 |-----|-----|
@@ -199,7 +201,7 @@ The global `bblock` object is retained for compatibility with v1.x.x.
 
 </details>
 
-## Event Binding
+## 4. Event Binding
 
 Use `player.on(eventName, callback)` to bind player events. You can register multiple callbacks for the same event, but registering the same function reference multiple times will overwrite the previous registration. Event names are lowercase.
 
@@ -207,11 +209,11 @@ Use `player.on(eventName, callback)` to bind player events. You can register mul
 
 <summary>Expand to view supported events</summary>
 
-### Native Audio Events
+### 4.1. Native Audio Events
 
 Native audio events such as `play`, `canplay`, and `timeupdate` are bound directly to the underlying `<audio>` element when registered via `player.on`. Unlike event listeners added using `addEventListener` on `player.audioElement`, listeners registered via `player.on` are automatically managed and, by default, share the same lifecycle as the player.  
 
-### Player Events
+### 4.2. Player Events
 
 The player also emits some events of its own ( *ˊᵕˋ)σ
 
@@ -229,7 +231,7 @@ The player also emits some events of its own ( *ˊᵕˋ)σ
 
 </details>
 
-## Build It
+## 5. Build It
 
 ```bash
 npm install
@@ -245,7 +247,7 @@ dist/
 └── bblock.umd.js
 ```
 
-## Thanks
+## 6. Thanks
 
 * @[小太](https://github.com/CatSouta)
 * @[奇趣保罗](https://github.com/Dreamer-Paul)
