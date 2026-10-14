@@ -16,11 +16,11 @@
 
 [bblock.js.org/demo](https://bblock.js.org/demo)  
 
-## 造他就完事了!
+## 1. 造他就完事了!
 
 <details>
 
-<summary>展开查看 v1.x.x 版的造法</summary>
+<summary>展开查看 <code>v1.x.x</code> 版的造法</summary>
 
 1. 在头部引用 `bblock.(m.).css`, 在所有 `<bblock></bblock>` 标签之后引用 `bblock.(m.).js`。 
 2. 在html内加入类似于以下标签：  
@@ -64,7 +64,7 @@
    
 </details>
 
-BBlock v2.x.x **在兼容 v1.x.x 的构造方式的前提下**新增了实例化构造方式：  
+BBlock `v2.x.x` **在兼容 `v1.x.x` 的构造方式的前提下**新增了实例化构造方式：  
 
 ```javascript
 const player = new BBlockPlayer(element, config);
@@ -88,7 +88,7 @@ const player = bblock.c(element, config);
 |`progressColor`|进度条颜色|非必需。CSS 颜色值或 `none`，默认是 `none`，即自适应颜色|
 |`progressOpacity`|进度条透明度|非必需。取值范围为 0~1，默认是 0.6|
 
-### 快速入门: 浏览器使用
+### 1.1. 快速入门: 浏览器使用
 
 ```html
 <div id="my-player"></div>
@@ -110,7 +110,7 @@ const player = new BBlockPlayer(
 )
 ```
 
-### 作为模块导入使用
+### 1.2. 作为模块导入使用
 
 ```bash
 # 安装 bblock 包
@@ -132,18 +132,18 @@ const player = new BBlockPlayer(element, config);
 // 也可以使用 bblock.c(element, config) 创建实例
 ```
    
-## 进度调节与音量调节
+## 2. 进度调节与音量调节
 
 俗话说得好，麻雀虽小五脏俱全，进度调节和音量调节这两个播放器基本功能还是要有滴 (;ﾟ∀ﾟ)  
 
-对于旧版 (<= v1.4.1)：  
+对于旧版 (<= `v1.4.1`)：  
 
 * 鼠标悬停在方块上，会出现五五开的蓝紫块  
 * 拖拽左方的蓝块可以调整播放进度条  
 * 拖拽右方的紫块可以调节音量  
 * 单击左方和右方的块可以看当前的进度或者音量  
 
-对于 v2.x.x:  
+对于 `v2.x.x`:  
 
 * 开始播放后，鼠标悬停在方块上，控制面板会显示：  
 
@@ -152,15 +152,15 @@ const player = new BBlockPlayer(element, config);
 * 拖拽左边的音量图标会进入音量调节模式，而拖拽右边图标会进入播放进度调节模式
 * 鼠标移出播放器时控制面板会直接隐藏；如果悬停在播放器中不动，过几秒控制面板也会自动隐藏
 
-## 播放器 API
+## 3. 播放器 API
 
-v2.x.x 的 `BBlockPlayer` 实例提供了一些 API 及可读写属性，下面说明以上方示例中创建的 `player` 为例。  
+`v2.x.x` 的 `BBlockPlayer` 实例提供了一些 API 及可读写属性，下面说明以上方示例中创建的 `player` 为例。  
 
 <details>
 
 <summary>展开查看</summary>
 
-### 方法
+### 3.1. 方法
 
 |方法|说明|
 |-----|-----|
@@ -173,7 +173,7 @@ v2.x.x 的 `BBlockPlayer` 实例提供了一些 API 及可读写属性，下面�
 |`player.off(eventName, callback)`|移除指定事件的回调，`callback` 需传入注册时的同一个函数引用|
 |`player.offAll()`|移除通过 `player.on()` 注册的所有事件监听|
 
-### 属性
+### 3.2. 属性
 
 |属性|读写|说明|
 |-----|-----|-----|
@@ -186,9 +186,9 @@ v2.x.x 的 `BBlockPlayer` 实例提供了一些 API 及可读写属性，下面�
 |`player.id`|只读|播放器的唯一 ID，类型为字符串|
 |`player.destroyed`|只读|播放器是否已被销毁|
 
-### 全局实例管理
+### 3.3. 全局实例管理
 
-保留全局的 `bblock` 对象是为了和 v1.x.x 版本保持兼容。  
+保留全局的 `bblock` 对象是为了和 `v1.x.x` 版本保持兼容。  
 
 |API|说明|
 |-----|-----|
@@ -201,7 +201,7 @@ v2.x.x 的 `BBlockPlayer` 实例提供了一些 API 及可读写属性，下面�
 
 </details>
 
-## 事件绑定
+## 4. 事件绑定
 
 可使用 `player.on(eventName, callback)` 绑定播放器事件，同一事件可以注册多个回调，但同一个函数引用重复注册只会保留一份。事件名称使用小写。
 
@@ -209,11 +209,11 @@ v2.x.x 的 `BBlockPlayer` 实例提供了一些 API 及可读写属性，下面�
 
 <summary>展开查看支持的事件</summary>
 
-### 原生音频事件
+### 4.1. 原生音频事件
 
 诸如 `play`, `canplay`, `timeupdate` 一类的原生音频事件如果用 `player.on` 绑定，会直接透传绑定到底层的 `<audio>` 元素上。和直接在 `player.audioElement` 上用 `addEventListener` 绑定事件不同，用 `player.on` 绑定的事件会被自动管理，默认情况下生命周期和播放器生命周期一致。
 
-### 播放器事件
+### 4.2. 播放器事件
 
 播放器自身会产生一些独特的事件 ( *ˊᵕˋ)σ   
 
@@ -231,7 +231,7 @@ v2.x.x 的 `BBlockPlayer` 实例提供了一些 API 及可读写属性，下面�
 
 </details>
 
-## 手动构建
+## 5. 手动构建
 
 ```bash
 npm install
@@ -247,7 +247,7 @@ dist/
 └── bblock.umd.js
 ```
 
-## 感谢  
+## 6. 感谢  
 
 * @[小太](https://github.com/CatSouta)  
 * @[奇趣保罗](https://github.com/Dreamer-Paul)  
