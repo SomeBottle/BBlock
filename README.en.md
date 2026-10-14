@@ -1,6 +1,6 @@
 # BBlock
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/SomeBottle/BBlock)](https://github.com/SomeBottle/BBlock)  
+<a class="github-button" href="https://github.com/SomeBottle/BBlock" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star SomeBottle/BBlock on GitHub">Star</a>
 
 [ Lang: [简体中文](./README.md) | English ]  
 
@@ -261,3 +261,5 @@ This project uses some icons from [Lucide Icons](https://lucide.dev/), licensed 
 Licensed under the MIT License.
 
 Thanks for using. (￣▽￣)"
+
+<script async defer src="https://buttons.github.io/buttons.js"></script>
