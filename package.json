@@ -1,6 +1,6 @@
 {
   "name": "bblock",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Wow~ you can really play! Square Music Player",
   "main": "./dist/bblock.umd.js",
   "module": "./dist/bblock.esm.js",
