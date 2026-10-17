@@ -93,7 +93,7 @@ class BBlockPlayer {
 	 * 等待元素的过渡动画结束
 	 * @param {HTMLElement} element 元素
 	 * @param {string} [propertyName=""] 可选的过渡属性名
-	 * @param {number} [duration=500] 可选的兜底过渡持续时间，单位为毫秒
+	 * @param {number} [duration=500] 可选的兜底过渡持续时间，单位为毫秒，默认 500ms
 	 * @returns {Promise} 返回一个 Promise，当过渡动画结束时 resolve
 	 */
 	static waitTransitionEnd(element, propertyName = "", duration = 500) {
@@ -428,7 +428,6 @@ class BBlockPlayer {
 	 * 设置状态为音频播放出错
 	 */
 	_setPlayerErrorState() {
-		this._playbackTransitionToken++;
 		this._audioError = true;
 		if (this._audioReloading) {
 			// 如果是重载时失败也提示一下
@@ -436,10 +435,8 @@ class BBlockPlayer {
 			this._audioReloading = false; // 重置重载状态
 		}
 		this._wrapperEl.classList.add('state-error');
-		this._wrapperEl.classList.remove('state-loading');
+		this._setPlayerPausedState(); // 如果正在播放时出错，移除播放状态
 		this._wrapperEl.classList.remove('state-first-loading');
-		this._wrapperEl.classList.remove('edge-blur-active');
-		this._hideControls();
 	}
 
 	/**
@@ -486,6 +483,8 @@ class BBlockPlayer {
 		this._audioError = false;
 		this._audioReloading = true; // 标记正在重载
 		this._wrapperEl.classList.remove('state-error');
+		// 播放器进入暂停状态
+		this._setPlayerPausedState();
 		// 回到最初的载入状态
 		this._wrapperEl.classList.add('state-first-loading');
 		this._audioEl.load();
